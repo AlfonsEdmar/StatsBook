@@ -2,11 +2,6 @@ table-of-contents
 introduction
 foreword
 some-useful-resources
-exploratory-factor-analysis-efa
-confirmatory-factor-analysis
-multi-level-modelling
-structural-equation-modelling
-meta-analysis
 what-i-expect-you-to-know
 what-i-expect-you-to-know-1
 descriptive-statistics
@@ -36,3 +31,8 @@ poststratification
 path-analysis
 multiple-regressionagain
 mediation-analysis
+exploratory-factor-analysis-efa
+confirmatory-factor-analysis
+multi-level-modelling
+structural-equation-modelling
+meta-analysis
