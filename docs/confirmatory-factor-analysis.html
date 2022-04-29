@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>4 Confirmatory factor analysis | Not yet decided</title>
+  <meta name="description" content="4 Confirmatory factor analysis | Not yet decided" />
+  <meta name="generator" content="bookdown 0.26 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="4 Confirmatory factor analysis | Not yet decided" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="4 Confirmatory factor analysis | Not yet decided" />
+  
+  
+  
+
+<meta name="author" content="B. Alfons Edmar" />
+
+
+<meta name="date" content="2022-04-29" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="exploratory-factor-analysis-efa.html"/>
+<link rel="next" href="multi-level-modelling.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">StatsBook</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Table of contents</a></li>
+<li class="chapter" data-level="2" data-path="introduction.html"><a href="introduction.html"><i class="fa fa-check"></i><b>2</b> Introduction</a></li>
+<li class="chapter" data-level="3" data-path="exploratory-factor-analysis-efa.html"><a href="exploratory-factor-analysis-efa.html"><i class="fa fa-check"></i><b>3</b> Exploratory factor analysis (EFA)</a></li>
+<li class="chapter" data-level="4" data-path="confirmatory-factor-analysis.html"><a href="confirmatory-factor-analysis.html"><i class="fa fa-check"></i><b>4</b> Confirmatory factor analysis</a></li>
+<li class="chapter" data-level="5" data-path="multi-level-modelling.html"><a href="multi-level-modelling.html"><i class="fa fa-check"></i><b>5</b> Multi-level modelling</a></li>
+<li class="chapter" data-level="6" data-path="structural-equation-modelling.html"><a href="structural-equation-modelling.html"><i class="fa fa-check"></i><b>6</b> Structural equation modelling</a></li>
+<li class="chapter" data-level="7" data-path="meta-analysis.html"><a href="meta-analysis.html"><i class="fa fa-check"></i><b>7</b> Meta-analysis</a></li>
+<li class="chapter" data-level="8" data-path="introduction-1.html"><a href="introduction-1.html"><i class="fa fa-check"></i><b>8</b> Introduction</a>
+<ul>
+<li class="chapter" data-level="8.1" data-path="introduction-1.html"><a href="introduction-1.html#foreword"><i class="fa fa-check"></i><b>8.1</b> Foreword</a></li>
+<li class="chapter" data-level="8.2" data-path="introduction-1.html"><a href="introduction-1.html#some-useful-resources"><i class="fa fa-check"></i><b>8.2</b> Some useful resources</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="what-i-expect-you-to-know.html"><a href="what-i-expect-you-to-know.html"><i class="fa fa-check"></i><b>9</b> What I expect you to know</a></li>
+<li class="chapter" data-level="10" data-path="what-i-expect-you-to-know-1.html"><a href="what-i-expect-you-to-know-1.html"><i class="fa fa-check"></i><b>10</b> What I expect you to know</a>
+<ul>
+<li class="chapter" data-level="10.1" data-path="what-i-expect-you-to-know-1.html"><a href="what-i-expect-you-to-know-1.html#descriptive-statistics"><i class="fa fa-check"></i><b>10.1</b> Descriptive statistics</a></li>
+<li class="chapter" data-level="10.2" data-path="what-i-expect-you-to-know-1.html"><a href="what-i-expect-you-to-know-1.html#basic-null-hypothesis-testing"><i class="fa fa-check"></i><b>10.2</b> Basic null hypothesis testing</a></li>
+<li class="chapter" data-level="10.3" data-path="what-i-expect-you-to-know-1.html"><a href="what-i-expect-you-to-know-1.html#statistical-phenomena"><i class="fa fa-check"></i><b>10.3</b> Statistical phenomena</a></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="a-brief-introduction-to-r-programming.html"><a href="a-brief-introduction-to-r-programming.html"><i class="fa fa-check"></i><b>11</b> A brief introduction to R programming</a></li>
+<li class="chapter" data-level="12" data-path="bayesian-and-frequentists-statistics.html"><a href="bayesian-and-frequentists-statistics.html"><i class="fa fa-check"></i><b>12</b> Bayesian and Frequentists statistics</a>
+<ul>
+<li class="chapter" data-level="12.1" data-path="bayesian-and-frequentists-statistics.html"><a href="bayesian-and-frequentists-statistics.html#likelihood-functions"><i class="fa fa-check"></i><b>12.1</b> Likelihood functions</a></li>
+<li class="chapter" data-level="12.2" data-path="bayesian-and-frequentists-statistics.html"><a href="bayesian-and-frequentists-statistics.html#density-distributes"><i class="fa fa-check"></i><b>12.2</b> Density distributes</a></li>
+<li class="chapter" data-level="12.3" data-path="bayesian-and-frequentists-statistics.html"><a href="bayesian-and-frequentists-statistics.html#all-hail-the-almighty-gauss"><i class="fa fa-check"></i><b>12.3</b> All hail the almighty Gauss</a></li>
+</ul></li>
+<li class="chapter" data-level="13" data-path="non-parametric-statistics.html"><a href="non-parametric-statistics.html"><i class="fa fa-check"></i><b>13</b> Non-parametric statistics</a>
+<ul>
+<li class="chapter" data-level="13.1" data-path="non-parametric-statistics.html"><a href="non-parametric-statistics.html#asking-all-the-question-making-statements-and-assuming"><i class="fa fa-check"></i><b>13.1</b> Asking all the question, making statements, and assuming</a></li>
+<li class="chapter" data-level="13.2" data-path="non-parametric-statistics.html"><a href="non-parametric-statistics.html#the-old-guard"><i class="fa fa-check"></i><b>13.2</b> The old guard</a></li>
+<li class="chapter" data-level="13.3" data-path="non-parametric-statistics.html"><a href="non-parametric-statistics.html#bootstrapping"><i class="fa fa-check"></i><b>13.3</b> Bootstrapping</a></li>
+</ul></li>
+<li class="chapter" data-level="14" data-path="correlation-and-covariation-in-r.html"><a href="correlation-and-covariation-in-r.html"><i class="fa fa-check"></i><b>14</b> Correlation and Covariation in R</a>
+<ul>
+<li class="chapter" data-level="14.1" data-path="correlation-and-covariation-in-r.html"><a href="correlation-and-covariation-in-r.html#welcome-to-the-matrix"><i class="fa fa-check"></i><b>14.1</b> Welcome to the matrix</a></li>
+</ul></li>
+<li class="chapter" data-level="15" data-path="regression-analysis.html"><a href="regression-analysis.html"><i class="fa fa-check"></i><b>15</b> Regression analysis</a>
+<ul>
+<li class="chapter" data-level="15.1" data-path="regression-analysis.html"><a href="regression-analysis.html#univariate-regression"><i class="fa fa-check"></i><b>15.1</b> Univariate regression</a></li>
+<li class="chapter" data-level="15.2" data-path="regression-analysis.html"><a href="regression-analysis.html#multiple-regression"><i class="fa fa-check"></i><b>15.2</b> Multiple regression</a></li>
+<li class="chapter" data-level="15.3" data-path="regression-analysis.html"><a href="regression-analysis.html#the-general-linear-model-anova"><i class="fa fa-check"></i><b>15.3</b> The general linear model (ANOVA)</a></li>
+<li class="chapter" data-level="15.4" data-path="regression-analysis.html"><a href="regression-analysis.html#the-generalized-linear-modellogit"><i class="fa fa-check"></i><b>15.4</b> The generalized linear model(logit)</a></li>
+<li class="chapter" data-level="15.5" data-path="regression-analysis.html"><a href="regression-analysis.html#cross-validation"><i class="fa fa-check"></i><b>15.5</b> Cross validation</a></li>
+<li class="chapter" data-level="15.6" data-path="regression-analysis.html"><a href="regression-analysis.html#lasso-least-absolute-shrinkage-and-selection-operator"><i class="fa fa-check"></i><b>15.6</b> LASSO (least absolute shrinkage and selection operator)</a></li>
+<li class="chapter" data-level="15.7" data-path="regression-analysis.html"><a href="regression-analysis.html#ridge-regression"><i class="fa fa-check"></i><b>15.7</b> Ridge regression</a></li>
+<li class="chapter" data-level="15.8" data-path="regression-analysis.html"><a href="regression-analysis.html#fully-bayesian-regression"><i class="fa fa-check"></i><b>15.8</b> Fully Bayesian regression</a></li>
+<li class="chapter" data-level="15.9" data-path="regression-analysis.html"><a href="regression-analysis.html#poststratification"><i class="fa fa-check"></i><b>15.9</b> Poststratification</a></li>
+<li class="chapter" data-level="15.10" data-path="regression-analysis.html"><a href="regression-analysis.html#path-analysis"><i class="fa fa-check"></i><b>15.10</b> Path analysis</a></li>
+<li class="chapter" data-level="15.11" data-path="regression-analysis.html"><a href="regression-analysis.html#multiple-regressionagain"><i class="fa fa-check"></i><b>15.11</b> Multiple regression(again)</a></li>
+<li class="chapter" data-level="15.12" data-path="regression-analysis.html"><a href="regression-analysis.html#mediation-analysis"><i class="fa fa-check"></i><b>15.12</b> Mediation analysis</a></li>
+</ul></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Not yet decided</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="confirmatory-factor-analysis" class="section level1 hasAnchor" number="4">
+<h1><span class="header-section-number">4</span> Confirmatory factor analysis<a href="confirmatory-factor-analysis.html#confirmatory-factor-analysis" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="exploratory-factor-analysis-efa.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="multi-level-modelling.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/AlfonsEdmar/StatsBook/edit/master/11.CFA.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": "https://github.com/AlfonsEdmar/StatsBook/blob/master/11.CFA.Rmd",
+"text": null
+},
+"download": null,
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+</body>
+
+</html>
