@@ -1,0 +1,7 @@
+# Bayesian and Frequentists statistics
+
+## Likelihood functions
+
+## Density distributes 
+
+## All hail the almighty Gauss

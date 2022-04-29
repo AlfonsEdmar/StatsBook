@@ -1,0 +1,8 @@
+# Non-parametric statistics
+
+## Asking all the question, making statements, and assuming
+
+## The old guard
+
+## Bootstrapping
+
