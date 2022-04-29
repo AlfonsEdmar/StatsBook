@@ -7,3 +7,52 @@ site: bookdown::bookdown_site
 
 # Table of contents 
 
+- Introduction 
+  - Foreword
+  - Some useful resources 
+
+- What I expect you to know 
+    - Descriptive statistics
+    - Basic null hypothesis testing
+    - Statistical phenomena (regression to the mean, CLT, LOLN)
+    
+- A brief introduction to R programming (with links)
+
+- Bayesian and Frequentists statistics
+  - Likelihood functions
+  - Density distributes 
+  - All hail the almighty Gauss
+
+- Non-parametric statistics
+  - Asking all the question, making statements, and assuming
+  - The old guard
+  - Bootstrapping
+
+- Correlation and Covariation in R
+  - Welcome to the matrix 
+
+- Regression analysis 
+  - Univariate regression
+  - Multiple regression
+  - The general linear model (ANOVA)
+  - The generalized linear model(logit)
+  - Cross validation
+  - LASSO (least absolute shrinkage and selection operator)
+  - Ridge regression 
+  - Fully Bayesian regression 
+  - Poststratification 
+  
+- Path analysis
+  - Multiple regression(again)
+  - Mediation analysis 
+
+- Exploratory factor analysis (EFA)
+
+- Confirmatory factor analysis (CFA) 
+
+- Multi-level modelling (MLM)
+
+- Structural equation modelling (SEM)
+
+- Meta-analysis
+
