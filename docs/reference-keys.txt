@@ -1,13 +1,12 @@
 table-of-contents
 introduction
+foreword
+some-useful-resources
 exploratory-factor-analysis-efa
 confirmatory-factor-analysis
 multi-level-modelling
 structural-equation-modelling
 meta-analysis
-introduction-1
-foreword
-some-useful-resources
 what-i-expect-you-to-know
 what-i-expect-you-to-know-1
 descriptive-statistics

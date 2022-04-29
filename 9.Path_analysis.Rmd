@@ -1,4 +1,4 @@
-## Path analysis
+# Path analysis
 
 ## Multiple regression(again)
 
