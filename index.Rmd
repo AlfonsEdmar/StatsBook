@@ -18,7 +18,7 @@ site: bookdown::bookdown_site
     
 - A brief introduction to R programming (with links)
 
-- Bayesian and Frequentists statistics
+- Bayesian and Frequentist statistics
   - Likelihood functions
   - Density distributes 
   - All hail the almighty Gauss
@@ -27,10 +27,10 @@ site: bookdown::bookdown_site
   - Asking all the question, making statements, and assuming
   - The old guard
   - Bootstrapping
-
+  
 - Correlation and Covariation in R
   - Welcome to the matrix 
-
+  
 - Regression analysis 
   - Univariate regression
   - Multiple regression
@@ -45,7 +45,7 @@ site: bookdown::bookdown_site
 - Path analysis
   - Multiple regression(again)
   - Mediation analysis 
-
+  
 - Exploratory factor analysis (EFA)
 
 - Confirmatory factor analysis (CFA) 

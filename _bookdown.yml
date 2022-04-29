@@ -5,4 +5,4 @@ edit: https://github.com/AlfonsEdmar/StatsBook/edit/master/%s
 view: https://github.com/AlfonsEdmar/StatsBook/blob/master/%s
 language:
   ui:
-    chapter_name: "Chapter "
+    chapter_name: ""
