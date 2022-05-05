@@ -30,8 +30,7 @@ bootstrapping
 correlation-and-covariation-in-r
 welcome-to-the-matrix
 regression-analysis
-univariate-regression
-multiple-regression
+univariate-regression-and-multiple-regression
 the-general-linear-model-anova
 the-generalized-linear-modellogit
 cross-validation
@@ -40,6 +39,8 @@ ridge-regression
 fully-bayesian-regression
 poststratification
 path-analysis
+streiner2005
+workshop-analysis
 multiple-regressionagain
 mediation-analysis
 exploratory-factor-analysis-efa

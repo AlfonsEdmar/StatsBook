@@ -11,17 +11,20 @@ site: bookdown::bookdown_site
   - Foreword
   - Some useful resources 
 
+-  Welcome to R
+  - The R environment
+  - Basic programming 
+  - Organisation
+  - Rmarkdown 
+
 - What I expect you to know 
     - Descriptive statistics
     - Basic null hypothesis testing
     - Statistical phenomena (regression to the mean, CLT, LOLN)
     
-- A brief introduction to R programming (with links)
+- Useful R packages and functions (with links)
 
 - Bayesian and Frequentist statistics
-  - Likelihood functions
-  - Density distributes 
-  - All hail the almighty Gauss
 
 - Non-parametric statistics
   - Asking all the question, making statements, and assuming
@@ -32,8 +35,7 @@ site: bookdown::bookdown_site
   - Welcome to the matrix 
   
 - Regression analysis 
-  - Univariate regression
-  - Multiple regression
+  - Univariate regression and Multiple regression
   - The general linear model (ANOVA)
   - The generalized linear model(logit)
   - Cross validation

@@ -1,8 +1,392 @@
 # Regression analysis 
 
-## Univariate regression
+## Univariate regression and multiple regression 
 
-## Multiple regression
+Packages need to follow along with the code, special packages will be loaded when and if needed.
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(car)
+library(haven)
+library(here)
+
+```
+Regression is not always easily visualised. This here is a function that will visualise a univariate slope along with some of the most important measurements. This is a slight adaption from a function I found here: find the article
+```{r}
+regplot <- function (fit, name) {
+  
+  ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+    geom_jitter( alpha = .5, size = 2) +
+    stat_smooth(method = "lm") +
+    labs(title = name, subtitle = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
+                       "Intercept =",signif(fit$coef[[1]],5 ),
+                       " Slope =",signif(fit$coef[[2]], 5),
+                       " P =",signif(summary(fit)$coef[4], 5)))+
+    theme_bw()
+    
+}
+```
+Field uses data from album sales. When loading data in r the best way is to put your data files in an easy to access place - note that this is my path, the data file is album sales from chapter 8 or 9 depending on edition so load that.  
+```{r message=FALSE, warning=FALSE}
+data <- read_sav(here("Album Sales.sav"))
+#Let´s change the names to low caps so we can type easily. 
+names(data) <- c('adverts', 'sales', 'airplay', 'image')
+#Taking a peek at the data
+head(data)
+summary(data)
+```
+
+All variables are treated as numerical. Before any formal analysis can be pursued, we should first visually inspect the variables.
+```{r message=FALSE, warning=FALSE}
+#I usually prefer histograms without density curves but let’s use them both to visualise the distribution of our data. 
+ggplot(data, aes(adverts))+
+  geom_histogram(aes(y = ..density..), color = 'steelblue', size = 1)+
+  geom_density()
+ggplot(data, aes(sales))+
+  geom_histogram(aes(y = ..density..), color = 'steelblue', size = 1)+
+  geom_density()
+ggplot(data, aes(airplay))+
+  geom_histogram(aes(y = ..density..), color = 'steelblue', size = 1)+
+  geom_density()
+ggplot(data, aes(image))+
+  geom_histogram(aes(y = ..density..), color = 'steelblue', size = 1)+
+  geom_density()
+#looks pretty good, the ..density.. call is what gives the curve. 
+```
+
+So this is what we are working with, our IVs don’t need to be normal, the residuals need to be normal however. We don’t want heteroskedasticity. The neat thing with having multiple continuous variables is that it opens up plotting possibilities. Let’s make some graphs 
+```{r message=FALSE, warning=FALSE}
+ggplot(data = data,  aes(y = sales, x = adverts
+                         , size = image, colour = airplay))+
+  geom_point(alpha = .8)+
+  theme_bw()
+#It is a bit messy, lets clean our plot by colouring by image. Let’s first colour by images that’s less than 5
+ggplot(data = data,  aes(y = sales, x = adverts
+                         , size = airplay, colour = image < 5))+
+  geom_point(alpha = .5)+
+  theme_bw()
+
+#interesting, most bands have an image at 5 or above, and those that don’t do not sell well regardless of their advert budget or image (the size of the points are roughly the same). Let’s colour by image <8
+ggplot(data = data,  aes(y = sales, x = adverts
+                         , size = airplay, colour = image < 8))+
+  geom_point(alpha = .5)+
+  theme_bw()
+#Pretty graphs right? 
+```
+This is a better spread. But we can see that image does not seem to impact sales that much. There seems to be an effect, however. The most interesting thing with this graph however is that a high advert budget more or less promises good sales. No band with a budget less than 1 000 000 pounds have less than 100 000 album sales. A crude heuristic for bands wanting to fund their adverts with album sales could be to not sell their album for less than 10£. But this is of course bad advice. We have no information on the cost of the albums and sales are most likely affected by the cost of the album. Nevertheless, this is a fun graph. 
+
+Let’s make image into a factor so we can split our graphs better using the facet_wrap function
+
+```{r message=FALSE, warning=FALSE}
+plotdata <- data
+plotdata$image <- as.factor(plotdata$image)
+#Now image is a factor with to levels. Let’s use the image of the band as colour
+ggplot(data = plotdata,  aes(y = sales, x = adverts
+                         , size = airplay, colour = image))+
+  geom_point(alpha = .8)+
+  facet_wrap(~image)+
+  theme_bw()
+#Or
+ggplot(data = plotdata,  aes(y = sales, x = adverts
+                             , colour = airplay))+
+  geom_point(size = 3, alpha = .8)+
+  facet_wrap(~image)+
+  theme_bw()
+#Note that one graph colours airplay while the other image
+```
+
+Another interesting graph. Interestingly we can see that the band with the highest image has no advert budget. However, very few bands with that high image exists. The main idea this graph gives is that the slope between sales and advert budget does not seem to depend heavily on the image of the band. However, bands with low image often have less advert budget - and less sales. we can also see a relationship between airplay and sales, bigger points are usually a bit higher up on sales than small points. 
+
+So what are our expectations given the graphs? we should expect an effect of image airplay and adverts on sales, but there will probably not be any meaningful interactions between them since no relationship was observable in the graphs. let’s see if this holds up.
+
+
+our first model is a simple regression of adverts on album sales. We would expect more sales with more advert budget take a look at the lm function for syntax and code reference.
+
+```{r message=FALSE, warning=FALSE}
+?lm
+#fitting the model
+m1 <- lm(sales ~ adverts, data = data)
+```
+One of the most important things we have to do when analysing data using statistical methods is checking that our assumptions for our method holds. 
+For regression that: normality of residuals, independent errors, no multicollinearity, and homogeneity of variance in the residuals. Let’s check these things out. 
+```{r message=FALSE, warning=FALSE}
+#Checking the residuals and normality assumption
+ggplot(data = data, aes(y = predict.lm(m1), x = m1$residuals))+
+  geom_point(size = 3, alpha = .4)+
+  geom_smooth(method = 'lm')
+
+#Nice, the predicted values of our model is distributed quite normally across the residuals. This indicates that the variation in our model is roughly equal on low, medium, and high point estimates. We can also check the density of the
+
+#Residuals - they should be normal around 0. 
+ggplot(data = data, aes(x = m1$residuals))+
+  geom_density()
+
+ggplot(data = data, aes(x = m1$residuals))+
+  geom_histogram(colour = 'steelblue', size = 1)
+
+#Nice, this means that our error in measurement isn’t systematically lower or higher than our fitted model. 
+
+#Checking error independence with Durbin Watson test
+durbinWatsonTest(m1)
+#Nice, the p-value is insignificant and the test-statistic is close to 2.
+```
+Now that we have checked our assumptions and have a good ground to stand on, we can check the fit of our model. 
+```{r message=FALSE, warning=FALSE}
+#Checking the fit of the model 
+summary.lm(m1)
+
+#Lets plot this manually in ggplot using geom_smooth, on our model
+ggplot(data, aes(y = sales, x = adverts))+
+  geom_point(alpha = .5, size = 2)+
+  geom_smooth(method = 'lm')+
+  theme_bw()
+#Geom smooth fits a linear model to the data, method = 'lm' tells it that it’s a linear model. 
+```
+And there we have it, but by using the regplot function we created above we can put some of the info from the model on the plot.
+```{r message=FALSE, warning=FALSE}
+regplot(m1, 'm1')
+summary.lm(m1)
+#Nice graph with good info :) 
+```
+Pretty neat right? now, what can we make of this? the slope estimates of ca 0.1 indicates that sales increase by .1 for every unit of adverts. The equates to roughly 100 sales per thousand pounds in advertising budget.
+Also, note the shaded line. This is our marginal 95% confidence interval. We can see that our uncertainty in the parameter estimate increases at the mode extreme values since we don’t have a lot of data regarding the dispersion on those levels of "adverts".
+
+We should also check for influential cases analytically, not just visually. we can do this with the function "lm.influence". 
+```{r message=FALSE, warning=FALSE}
+summary(influence.measures(m1))
+summary(cooks.distance(m1))
+#let’s look at the hat values manually 
+summary(hatvalues(m1))
+hatvalues(m1)%>% sort.default(decreasing = TRUE) %>% head(20) 
+```
+Going by cooks distance we don’t seem to have any very influential values, that is, values exceeding 1. However, we have some values that exceeds three times the leverage or hatvalues. if we go by hoaglin and welch guides of looking at values exceeding three times the average, that is values exceeding .03. that is, observation 11, 23, 88, 87, 43 and 184. What happens if we remove them?
+```{r message=FALSE, warning=FALSE}
+clean_data <- slice(data, -c(11, 23, 88, 87, 43, 184))
+clean_m1 <- lm(sales~adverts, clean_data)
+regplot(clean_m1, 'clean m1')
+summary.lm(clean_m1)
+#.
+```
+Does not change much in terms of estimation. We can compare the graphs using the grid arrange function from the gridExtra package
+```{r message=FALSE, warning=FALSE}
+library(gridExtra)
+m1_plot <- regplot(m1, 'original model')
+clean_m1_plot <- regplot(clean_m1, 'influential observations removed')
+grid.arrange(m1_plot, clean_m1_plot, name = c('original', 'clean'))
+#.
+```
+Here we can easily see that the influential observations were the cases with very high advertising budgets. it might be prudent to use the updated model, but no model is "better" than the other. We should use the model that helps us answer our research question best - "horses for courses"
+
+A fast way, but less pleasing and not as hands on, is to simply use the "plot" function. It gives much of the same information
+```{r message=FALSE, warning=FALSE}
+plot(m1)
+plot(clean_m1)
+#.
+```
+Note that the spread of fitted to residuals is much nicer when we exclude the influential observations. 
+
+let’s kick this up a notch and run a multiple regression on a split sample so that we can cross-validate our model. let’s take all the variables in our data
+```{r message=FALSE, warning=FALSE}
+#Splitting our sample randomly using rbinom
+set.seed(123)
+data_partition <- rbinom(200, 1, prob = .5) 
+data <- cbind(data, data_partition)
+rm(data_partition)
+
+#The binary variable "data partition" is our random divide of the sample in to 2. We will run the regression on one part of the sample and see how well it predicts the data in the second sample. let’s call it training data and test data. 
+
+training_data <- filter(data, data_partition == 1)
+glimpse(training_data$data_partition)
+test_data     <- filter(data, data_partition == 0)
+glimpse(test_data$data_partition)
+```
+Now we have our two samples, lets fit our training model. it works the same way as the simple regression, but we just add the additional IVs like you would in a normal regression formula. but first let’s standardize the data so it’s more easily comparable
+```{r message=FALSE, warning=FALSE}
+#Standardising, or, "scaling" our data
+z_training_data <- data.frame(scale(training_data))
+z_test_data <- data.frame(scale(test_data))
+#Fitting the multiple regression
+training_model <- lm(sales ~ adverts + image + airplay, data = z_training_data)
+```
+Like for the simple regression we need to check our assumptions 
+```{r message=FALSE, warning=FALSE}
+#Checking the residuals and normality assumtions 
+ggplot(data = training_data, aes(  y = predict.lm(training_model)
+                                 , x = training_model$residuals))+
+  geom_point(size = 3, alpha = .4)+
+  geom_smooth(method = 'lm')
+#Looks good
+ggplot(data = training_data, aes(x = training_model$residuals))+
+  geom_density()
+ggplot(data = training_data, aes(x = training_model$residuals))+
+  geom_histogram(colour = 'steelblue', size = 1)
+#Nice 
+
+#We need to check for multicollinearity when we do multiple regression. A cool way to do this is with GGally, but we can also just calculate VIF and tolerance(1/vif) 
+vif(training_model)
+1/vif(training_model) 
+#Tolerance is simply 1 divided by the VIF. Our vif should be <10 and our tolerance
+# >.2. 
+library(GGally)
+ggpairs(training_model)
+#Don´t worry about this, this is just a cool diagnostic tool with loads of info in a single plot with a very simple call. 
+
+#Checking error independence with Durbin Watson test
+durbinWatsonTest(training_model)
+#Still looks good, but notice that the test statistic is less close to 2. 
+#Small sample = bad
+```
+Now, let’s check the fit of out model 
+```{r message=FALSE, warning=FALSE}
+summary.lm(training_model)
+regplot(training_model, 'training model')
+#.
+```
+All estimates are significant, indicating that all variables contribute to 
+the number of sales, we have also doubled the R2, we can explain much more of the variation with this model. Note also how the visuals suck. it’s hard to visualize multiple regression. But let’s try some ways of visualising.
+
+One way is to use the broom package like so:
+
+```{r message=FALSE, warning=FALSE}
+library(broom)
+#We need to make image into a factor
+training_data$image <- as.factor(training_data$image)
+#We then fit the model that we want to plot
+plot1 <- lm(sales ~ adverts + image, data = training_data)
+#Then, using the augment function we can fit a slope to each level of "image"
+ggplot(augment(plot1), aes(y = sales, x = adverts, col = image))+
+  geom_point()+
+  geom_smooth(method = 'lm', se = FALSE)+
+  theme_bw()
+#.
+```
+
+This is a visualization of the sales across advert budget grouped by the band image, we can see that bands with a bad image (1), have fever sales, but they also have less budget. But we also see differences in slope depending on image. the band with the best image has a flatter slope then the bands with slightly worse image. Note that we already know this from our previous graphs, and they are way less messy, this is not a very good graph I think. 
+
+Again, visualizing multiple regression is hard, since the dimensions become hard to grasp after two or more variables, given that we care about interactions. One other way is though plotting marginal predictions or coefficients. This illustrates the regression output quite nicely I think, this is sometimes referred to as a simple slopes graph.
+
+```{r message=FALSE, warning=FALSE}
+#Lets extract the coefficients from the model 
+cf <- training_model$coef
+intercept <- cf[1]
+adverts   <- cf[2]
+adverts   <- round(adverts, 4)
+image     <- cf[3]
+image     <- round(image, 4)
+airplay   <- cf[4]
+airplay   <- round(airplay, 4)
+#Here they are
+paste(adverts, image, airplay)
+#This is a grid of values so that the plot has structure - this will be invisible in the graph
+statgrid <- data.frame( y = seq(from = 0, to = adverts, length = 100)
+                       ,x = seq(from = 0, to = 1, length = 100))
+#Plotting the slopes
+ggplot(data = statgrid, aes(x = x, y = y))+
+  geom_jitter(alpha = 0)+
+  geom_abline(intercept = intercept, slope = adverts
+              , col = 'blue', size = 1)+
+  geom_abline(intercept = intercept, slope = image
+              , col = 'red', size = 1)+
+  geom_abline(intercept = intercept, slope = airplay
+              , col = 'green', size = 1)+
+  ylab(label = 'standardised sale value')+
+  xlab(label = 'dependent variable slope')+
+  theme_bw()+
+  labs(title = 'Adverts = blue | Image = red | Airplay = green')
+#Our simple slopes plot
+```
+This visualization shows the slopes from the model. That is, the increase in units of sales when the dependent variable increases with one independently. I do not see this type of visualisation often but i quite like it. I think it’s a neat way of visualising a regression output. It is quite abstract though, since it requires that you scale you DVs so they can fit the same plot. 
+
+Lastly, let’s see if we have any significant interaction effects, this is a little teaser for what we will do later on in the moderation chapter but I think it might be a good idea to see if we have an interaction here. Going by the graphs earlier we should not expect anything big.
+```{r message=FALSE, warning=FALSE}
+# A third model that uses the interaction between image and adverts
+m3 <- lm(sales ~ adverts*image + airplay, data = z_training_data)
+summary.lm(m3)
+#The interaction is not significant. let’s go all out and fit a full interaction model - our fourth model
+m4 <- lm(sales ~ adverts*image*airplay, data = z_training_data)
+summary.lm(m4)
+```
+So, simply going by this the interaction terms does not do much for us. let’s just stick with our original training model and see how well it predicts our test data. Let’s extract our predictions
+```{r message=FALSE, warning=FALSE}
+#We need to load in the caret package for this (more on this later in the cross validation chapter)
+library(caret)
+# Make predictions and compute the R2, RMSE and MAE
+predictions <- training_model %>% predict(test_data)
+
+data.frame( R2 = R2(predictions, test_data$sales),
+            RMSE = RMSE(predictions, test_data$sales),
+            MAE = MAE(predictions, test_data$sales))
+#We have an RMSE of 242, if the training model has a lower one, it fits better
+
+#We need to make image numeric for prediction purposes
+training_data$image <- as.numeric(training_data$image)
+
+predictions.2 <- training_model %>% predict(training_data)
+data.frame( R2 = R2(predictions.2, training_data$sales),
+            RMSE = RMSE(predictions.2, training_data$sales),
+            MAE = MAE(predictions.2, training_data$sales))
+#So, not very unexpectedly, we have better fit on this model. 
+
+#Let´s store some predictions for plotting
+#Prediction on the training data
+pred_train <- training_model %>% predict(z_training_data) 
+#Prediction on the test data 
+pred_test  <- training_model %>% predict(z_test_data) 
+```
+Let’s plot the predictions 
+```{r}
+#For reference, this is what a perfect prediction would look like 
+ggplot(data = data.frame(data), aes(sales))+
+  geom_abline(intercept = 0, slope = 1, size = 2, col = 'red')+
+  geom_point(aes(y =sales, x = sales), size = 4, alpha = .5)+
+  ylab(label = 'sales')+
+  labs(title = 'perfect prediction')+
+  theme_bw()
+#Training data prediction
+ggplot(data = data.frame(z_training_data), aes(sales))+
+  geom_abline(intercept = 0, slope = 1, size = 2, col = 'red')+
+  geom_point(aes(y =pred_train, x = sales), size = 4, alpha = .5)+
+  ylab(label = 'model predicted sales')+
+  theme_bw()
+#.
+```
+This shows how well our model performs, the red line indicating perfect predictions that is, if we could estimate the number of sales perfectly. Which we clearly can’t, let´s look at our out of sample prediction.
+
+```{r}
+ggplot(data = data.frame(z_test_data), aes(sales))+
+  geom_abline(intercept = 0, slope = 1, size = 2, col = 'red')+
+  geom_point(aes(y =pred_test, x = sales), size = 4, alpha = .5)+
+  ylab(label = 'model predicted sales')+
+  theme_bw()
+#.
+```
+Let’s compare all the plots using the grid arrange function again
+```{r}
+perfect_pred <- ggplot(data = data.frame(scale(data)), aes(sales))+
+  geom_abline(intercept = 0, slope = 1, size = 2, col = 'red')+
+  geom_point(aes(y =sales, x = sales), size = 4, alpha = .5)+
+  ylab(label = 'sales')+
+  labs(title = 'perfect prediction')+
+  theme_bw()
+insample_pred <- ggplot(data = data.frame(z_training_data), aes(sales))+
+  geom_abline(intercept = 0, slope = 1, size = 2, col = 'red')+
+  geom_point(aes(y =pred_train, x = sales), size = 4, alpha = .5)+
+  ylab(label = 'predicted sales')+
+  labs(title = 'insample prediction')+
+  theme_bw()
+outsample_pred <- ggplot(data = data.frame(z_test_data), aes(sales))+
+  geom_abline(intercept = 0, slope = 1, size = 2, col = 'red')+
+  geom_point(aes(y =pred_test, x = sales), size = 4, alpha = .5)+
+  ylab(label = 'predicted sales')+
+  labs(title = 'out of sample prediction')+
+  theme_bw()
+
+grid.arrange(perfect_pred, insample_pred, outsample_pred)
+#This last piece of code compiles the graphs 
+```
+And there we have it, this model seems pretty good. Nothing amazing, but pretty good. In "reality" out of sample predictions are usually worse, but since we have such a simple model with reasonable dependent variables, this is not that unexpected. We certainly dont have issues with over-fitting our model, which can cause it to make poor out of sample predictions. 
+
+In this chapter we have gone through a little bit of everything, we have some prediction some moderation some cross validation and of course the simple regression analysis. In future chapters we will take a closer look at all of these methods, if you want to have a more "real" example of regression check out the last chapter where we use real messy data for various analyses.
+
    
 ## The general linear model (ANOVA)
 
