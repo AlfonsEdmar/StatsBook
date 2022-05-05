@@ -40,6 +40,8 @@ ridge-regression
 fully-bayesian-regression
 poststratification
 path-analysis
+streiner2005
+workshop-analysis
 multiple-regressionagain
 mediation-analysis
 exploratory-factor-analysis-efa

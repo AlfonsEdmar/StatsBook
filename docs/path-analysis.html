@@ -23,7 +23,7 @@
 <meta name="author" content="B. Alfons Edmar" />
 
 
-<meta name="date" content="2022-05-05" />
+<meta name="date" content="2022-05-06" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -195,8 +195,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="10" data-path="path-analysis.html"><a href="path-analysis.html"><i class="fa fa-check"></i><b>10</b> Path analysis</a>
 <ul>
-<li class="chapter" data-level="10.1" data-path="path-analysis.html"><a href="path-analysis.html#multiple-regressionagain"><i class="fa fa-check"></i><b>10.1</b> Multiple regression(again)</a></li>
-<li class="chapter" data-level="10.2" data-path="path-analysis.html"><a href="path-analysis.html#mediation-analysis"><i class="fa fa-check"></i><b>10.2</b> Mediation analysis</a></li>
+<li class="chapter" data-level="10.1" data-path="path-analysis.html"><a href="path-analysis.html#streiner2005"><i class="fa fa-check"></i><b>10.1</b> Streiner(2005)</a></li>
+<li class="chapter" data-level="10.2" data-path="path-analysis.html"><a href="path-analysis.html#workshop-analysis"><i class="fa fa-check"></i><b>10.2</b> workshop analysis</a></li>
+<li class="chapter" data-level="10.3" data-path="path-analysis.html"><a href="path-analysis.html#multiple-regressionagain"><i class="fa fa-check"></i><b>10.3</b> Multiple regression(again)</a></li>
+<li class="chapter" data-level="10.4" data-path="path-analysis.html"><a href="path-analysis.html#mediation-analysis"><i class="fa fa-check"></i><b>10.4</b> Mediation analysis</a></li>
 </ul></li>
 <li class="chapter" data-level="11" data-path="exploratory-factor-analysis-efa.html"><a href="exploratory-factor-analysis-efa.html"><i class="fa fa-check"></i><b>11</b> Exploratory factor analysis (EFA)</a></li>
 <li class="chapter" data-level="12" data-path="confirmatory-factor-analysis.html"><a href="confirmatory-factor-analysis.html"><i class="fa fa-check"></i><b>12</b> Confirmatory factor analysis</a></li>
@@ -224,11 +226,1026 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="path-analysis" class="section level1 hasAnchor" number="10">
 <h1><span class="header-section-number">10</span> Path analysis<a href="path-analysis.html#path-analysis" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<div id="multiple-regressionagain" class="section level2 hasAnchor" number="10.1">
-<h2><span class="header-section-number">10.1</span> Multiple regression(again)<a href="path-analysis.html#multiple-regressionagain" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="streiner2005" class="section level2 hasAnchor" number="10.1">
+<h2><span class="header-section-number">10.1</span> Streiner(2005)<a href="path-analysis.html#streiner2005" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Path analysis is not really a type of analysis like OLS regression or logistic regression but rather a mode for communicating and fitting more complex models. The “path” in path analysis refers to the specification of relationships between variables. What the path describe can vary. For example, a regression analysis where Y is regressed on X we have a path between X and Y that describes a causal effect of X on Y. Note that it is us as researchers that make the call that the relationship is causal, just because X and Y correlate does not mean that either variable causes the other. If you recall the lavaan notations from way back in chapter 4 you should recognise the difference between fitting models in a “path context” versus a “regression context”. To monkey what all the smart people say, OLS/ML regression is only a special case of a path analysis/SEM. Hopefully the distinction between path analysis and regression will become a bit fuzzy by the end of this chapter, they are very much the same. One might intuit them as slightly different tools for very similar jobs. In my opinion, the strength of path analysis lies in the visualisation opportunities combined with the ability to fit complex models, restrict those models and lastly compare the fit of those models. The little less cool thing with complex path analysis is that it is, well…complex. Another weakness of path analysis compared to “normal regression” is that it is very easy to fit nested regression models and there is a very natural progression of model building in the multiple regression context - as we saw in the previous chapter. Before getting in to “live” datasets, we can simulate some data. For this lecture I/we(class of 2021) were assigned an article by Streiner, it is a pretty nice article IMO so even if you haven’t read it I can recommend it. In the article Streiner analyses data from an unknown disorder called photonumerophobia, he describes it as the fear, that our fears of numbers will come to light. He then defines three predictors for this disorder, namely:
+HSM &lt;- high school math grade
+ANX &lt;- overall anxiety
+TAX &lt;- the difference between predicted tax and actual tax (weird I know, but let’s run with it).
+Note that Streiner does not supply us with any data, he does however give as ample descriptives, enough to simulate the data quite closely, so let´s do that. All numbers are taken from table 1 in Streiner (2005): <a href="https://journals.sagepub.com/doi/pdf/10.1177/070674370505000207" class="uri">https://journals.sagepub.com/doi/pdf/10.1177/070674370505000207</a></p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="path-analysis.html#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co">#This is a perfect time for some faux. A nice little function is the cormat_from_triangle calls. It is quite simple, if you write in the top right triangle of correlations the function fills out the missing bits in the matrix. Now you don’t have to write so much - thanks computer.</span></span>
+<span id="cb27-2"><a href="path-analysis.html#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(faux)</span>
+<span id="cb27-3"><a href="path-analysis.html#cb27-3" aria-hidden="true" tabindex="-1"></a>cors <span class="ot">&lt;-</span> <span class="fu">cormat_from_triangle</span>(<span class="fu">c</span>(.<span class="dv">509</span> , <span class="sc">-</span>.<span class="dv">366</span>  ,.<span class="dv">346</span>,</span>
+<span id="cb27-4"><a href="path-analysis.html#cb27-4" aria-hidden="true" tabindex="-1"></a>                                      <span class="sc">-</span>.<span class="dv">264</span>  ,.<span class="dv">338</span>,</span>
+<span id="cb27-5"><a href="path-analysis.html#cb27-5" aria-hidden="true" tabindex="-1"></a>                                              .<span class="dv">260</span>))</span>
+<span id="cb27-6"><a href="path-analysis.html#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="co">#Now that we have the relationship between the data we can define the rest of the variables with the other descriptives given. </span></span>
+<span id="cb27-7"><a href="path-analysis.html#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4543</span>) <span class="co">#setting seed is always good</span></span>
+<span id="cb27-8"><a href="path-analysis.html#cb27-8" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">rnorm_multi</span>(  <span class="at">n =</span> <span class="dv">200</span> <span class="co">#let&#39;s take 200 observations</span></span>
+<span id="cb27-9"><a href="path-analysis.html#cb27-9" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">vars =</span> <span class="dv">4</span></span>
+<span id="cb27-10"><a href="path-analysis.html#cb27-10" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">mu   =</span> <span class="fu">c</span>(<span class="fl">26.79</span>, <span class="fl">20.33</span>, <span class="fl">74.69</span>, <span class="fl">1983.23</span>)</span>
+<span id="cb27-11"><a href="path-analysis.html#cb27-11" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">sd   =</span> <span class="fu">c</span>(<span class="fl">7.33</span> , <span class="fl">5.17</span> , <span class="fl">5.37</span> , <span class="fl">525.49</span>)</span>
+<span id="cb27-12"><a href="path-analysis.html#cb27-12" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">r    =</span> cors <span class="co">#this is our previously defined cor matrix</span></span>
+<span id="cb27-13"><a href="path-analysis.html#cb27-13" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">varnames =</span> <span class="fu">c</span>(<span class="st">&#39;pnp&#39;</span>, <span class="st">&#39;anx&#39;</span>, <span class="st">&#39;hsm&#39;</span>, <span class="st">&#39;tax&#39;</span>)</span>
+<span id="cb27-14"><a href="path-analysis.html#cb27-14" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">empirical =</span> T)<span class="co">#we want to perfectly reproduce the data</span></span>
+<span id="cb27-15"><a href="path-analysis.html#cb27-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-16"><a href="path-analysis.html#cb27-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-17"><a href="path-analysis.html#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="co">#Let´s look at the correlation matrix for the data we just generated </span></span>
+<span id="cb27-18"><a href="path-analysis.html#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(data)</span></code></pre></div>
+<pre><code>##        pnp    anx    hsm   tax
+## pnp  1.000  0.509 -0.366 0.346
+## anx  0.509  1.000 -0.264 0.338
+## hsm -0.366 -0.264  1.000 0.260
+## tax  0.346  0.338  0.260 1.000</code></pre>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="path-analysis.html#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co">#It´s a thing of beauty is it not? What about the descriptives? </span></span>
+<span id="cb29-2"><a href="path-analysis.html#cb29-2" aria-hidden="true" tabindex="-1"></a>pastecs<span class="sc">::</span><span class="fu">stat.desc</span>(data, <span class="at">desc =</span> T ,<span class="at">basic =</span> F)</span></code></pre></div>
+<pre><code>##                     pnp        anx         hsm          tax
+## median       26.4386929 20.0561011 74.67091194 1.954408e+03
+## mean         26.7900000 20.3300000 74.69000000 1.983230e+03
+## SE.mean       0.5183093  0.3655742  0.37971634 3.715775e+01
+## CI.mean.0.95  1.0220834  0.7208964  0.74878412 7.327348e+01
+## var          53.7289000 26.7289000 28.83690000 2.761397e+05
+## std.dev       7.3300000  5.1700000  5.37000000 5.254900e+02
+## coef.var      0.2736096  0.2543040  0.07189717 2.649667e-01</code></pre>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="path-analysis.html#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Lovely. </span></span></code></pre></div>
+<p>Now we have data that very much resembles that from the article we can fit the path models he describes. Let´s start with table 4. pnp is regressed on all variables and the predictors are allowed to correlate. We will use the package lavaan for this so if you need a refresher go back to chapter 4 and check out the links provided there.</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="path-analysis.html#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Loading lavaan and semPlot</span></span>
+<span id="cb32-2"><a href="path-analysis.html#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lavaan)</span>
+<span id="cb32-3"><a href="path-analysis.html#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(semPlot)</span>
+<span id="cb32-4"><a href="path-analysis.html#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Specifying our model with the lavaan syntax</span></span>
+<span id="cb32-5"><a href="path-analysis.html#cb32-5" aria-hidden="true" tabindex="-1"></a>model<span class="fl">.1</span> <span class="ot">&lt;-</span> (<span class="st">&#39;</span></span>
+<span id="cb32-6"><a href="path-analysis.html#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="st">            #regressions</span></span>
+<span id="cb32-7"><a href="path-analysis.html#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="st">            pnp ~ tax + hsm + anx</span></span>
+<span id="cb32-8"><a href="path-analysis.html#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="st">            </span></span>
+<span id="cb32-9"><a href="path-analysis.html#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="st">            #correlations</span></span>
+<span id="cb32-10"><a href="path-analysis.html#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="st">            anx ~~ hsm</span></span>
+<span id="cb32-11"><a href="path-analysis.html#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="st">            anx ~~ tax</span></span>
+<span id="cb32-12"><a href="path-analysis.html#cb32-12" aria-hidden="true" tabindex="-1"></a><span class="st">            tax ~~ hsm</span></span>
+<span id="cb32-13"><a href="path-analysis.html#cb32-13" aria-hidden="true" tabindex="-1"></a><span class="st">            </span></span>
+<span id="cb32-14"><a href="path-analysis.html#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="st">            &#39;</span>)</span>
+<span id="cb32-15"><a href="path-analysis.html#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="co">#Fitting our model using the sem function</span></span>
+<span id="cb32-16"><a href="path-analysis.html#cb32-16" aria-hidden="true" tabindex="-1"></a>fit<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">sem</span>(<span class="at">model =</span> model<span class="fl">.1</span>, <span class="at">data =</span> data)</span></code></pre></div>
+<pre><code>## Warning in lav_data_full(data = data, group = group, cluster = cluster, : lavaan WARNING:
+## some observed variances are (at least) a factor 1000 times larger than others; use
+## varTable(fit) to investigate</code></pre>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="path-analysis.html#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co">#The warning here is due to the fact that the tax variable is much larger than the others. Let´s plot the model. </span></span>
+<span id="cb34-2"><a href="path-analysis.html#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">semPaths</span>(  <span class="at">object =</span> fit<span class="fl">.1</span></span>
+<span id="cb34-3"><a href="path-analysis.html#cb34-3" aria-hidden="true" tabindex="-1"></a>         , <span class="at">what =</span> <span class="st">&#39;est, std&#39;</span></span>
+<span id="cb34-4"><a href="path-analysis.html#cb34-4" aria-hidden="true" tabindex="-1"></a>         , <span class="at">style =</span> <span class="st">&#39;lisrel&#39;</span></span>
+<span id="cb34-5"><a href="path-analysis.html#cb34-5" aria-hidden="true" tabindex="-1"></a>         , <span class="at">curvePivot =</span> <span class="cn">TRUE</span></span>
+<span id="cb34-6"><a href="path-analysis.html#cb34-6" aria-hidden="true" tabindex="-1"></a>         , <span class="at">edge.label.cex =</span> <span class="fl">1.5</span></span>
+<span id="cb34-7"><a href="path-analysis.html#cb34-7" aria-hidden="true" tabindex="-1"></a>         , <span class="at">rotation =</span> <span class="dv">2</span></span>
+<span id="cb34-8"><a href="path-analysis.html#cb34-8" aria-hidden="true" tabindex="-1"></a>         , <span class="at">sizeMan =</span> <span class="dv">10</span>)</span></code></pre></div>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-95-1.png" width="672" /></p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="path-analysis.html#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co">#And there it is, pretty as a picture. </span></span></code></pre></div>
+<p>Now, Streiner actually specifies two other models, those seen in figure 5. Let’s create and plot those two. After that we can check how they fit.</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="path-analysis.html#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co">#let’s start with model a</span></span>
+<span id="cb36-2"><a href="path-analysis.html#cb36-2" aria-hidden="true" tabindex="-1"></a>model.a <span class="ot">&lt;-</span> (<span class="st">&#39;</span></span>
+<span id="cb36-3"><a href="path-analysis.html#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="st">            #regressions</span></span>
+<span id="cb36-4"><a href="path-analysis.html#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="st">            pnp ~ tax</span></span>
+<span id="cb36-5"><a href="path-analysis.html#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="st">            tax ~ hsm</span></span>
+<span id="cb36-6"><a href="path-analysis.html#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="st">            hsm ~ anx</span></span>
+<span id="cb36-7"><a href="path-analysis.html#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="st">            &#39;</span>)</span>
+<span id="cb36-8"><a href="path-analysis.html#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="co">#Fitting the model</span></span>
+<span id="cb36-9"><a href="path-analysis.html#cb36-9" aria-hidden="true" tabindex="-1"></a>fit.a <span class="ot">&lt;-</span> <span class="fu">sem</span>(<span class="at">model =</span> model.a, <span class="at">data =</span> data)</span></code></pre></div>
+<pre><code>## Warning in lav_data_full(data = data, group = group, cluster = cluster, : lavaan WARNING:
+## some observed variances are (at least) a factor 1000 times larger than others; use
+## varTable(fit) to investigate</code></pre>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="path-analysis.html#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Ploting the model</span></span>
+<span id="cb38-2"><a href="path-analysis.html#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">semPaths</span>(  <span class="at">object =</span> fit.a</span>
+<span id="cb38-3"><a href="path-analysis.html#cb38-3" aria-hidden="true" tabindex="-1"></a>         , <span class="at">what =</span> <span class="st">&#39;est, std&#39;</span></span>
+<span id="cb38-4"><a href="path-analysis.html#cb38-4" aria-hidden="true" tabindex="-1"></a>         , <span class="at">layout =</span> <span class="st">&#39;spring&#39;</span></span>
+<span id="cb38-5"><a href="path-analysis.html#cb38-5" aria-hidden="true" tabindex="-1"></a>         , <span class="at">style =</span> <span class="st">&#39;lisrel&#39;</span></span>
+<span id="cb38-6"><a href="path-analysis.html#cb38-6" aria-hidden="true" tabindex="-1"></a>         , <span class="at">curvePivot =</span> T</span>
+<span id="cb38-7"><a href="path-analysis.html#cb38-7" aria-hidden="true" tabindex="-1"></a>         , <span class="at">edge.label.cex =</span> <span class="fl">1.5</span></span>
+<span id="cb38-8"><a href="path-analysis.html#cb38-8" aria-hidden="true" tabindex="-1"></a>         , <span class="at">rotation =</span> <span class="dv">1</span></span>
+<span id="cb38-9"><a href="path-analysis.html#cb38-9" aria-hidden="true" tabindex="-1"></a>         , <span class="at">residuals =</span> T</span>
+<span id="cb38-10"><a href="path-analysis.html#cb38-10" aria-hidden="true" tabindex="-1"></a>         , <span class="at">sizeMan =</span> <span class="dv">10</span>)</span></code></pre></div>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-96-1.png" width="672" /></p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="path-analysis.html#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co">#The control you have over the layout of these plots are vast, but the require tinkering that is not often worth it. This looks good enough. Let´s do the next model. </span></span>
+<span id="cb39-2"><a href="path-analysis.html#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-3"><a href="path-analysis.html#cb39-3" aria-hidden="true" tabindex="-1"></a>model.b <span class="ot">&lt;-</span> (<span class="st">&#39;</span></span>
+<span id="cb39-4"><a href="path-analysis.html#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="st">            #regressions</span></span>
+<span id="cb39-5"><a href="path-analysis.html#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="st">            pnp ~ tax + hsm</span></span>
+<span id="cb39-6"><a href="path-analysis.html#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="st">            tax ~ anx</span></span>
+<span id="cb39-7"><a href="path-analysis.html#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="st">            hsm ~ anx</span></span>
+<span id="cb39-8"><a href="path-analysis.html#cb39-8" aria-hidden="true" tabindex="-1"></a><span class="st">            &#39;</span>)</span>
+<span id="cb39-9"><a href="path-analysis.html#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="co">#Fitting the model</span></span>
+<span id="cb39-10"><a href="path-analysis.html#cb39-10" aria-hidden="true" tabindex="-1"></a>fit.b <span class="ot">&lt;-</span> <span class="fu">sem</span>(<span class="at">model =</span> model.b, <span class="at">data =</span> data)</span></code></pre></div>
+<pre><code>## Warning in lav_data_full(data = data, group = group, cluster = cluster, : lavaan WARNING:
+## some observed variances are (at least) a factor 1000 times larger than others; use
+## varTable(fit) to investigate</code></pre>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="path-analysis.html#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Ploting the model</span></span>
+<span id="cb41-2"><a href="path-analysis.html#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">semPaths</span>(  <span class="at">object =</span> fit.b</span>
+<span id="cb41-3"><a href="path-analysis.html#cb41-3" aria-hidden="true" tabindex="-1"></a>         , <span class="at">what =</span> <span class="st">&#39;est, std&#39;</span></span>
+<span id="cb41-4"><a href="path-analysis.html#cb41-4" aria-hidden="true" tabindex="-1"></a>         , <span class="at">layout =</span> <span class="st">&#39;tree2&#39;</span></span>
+<span id="cb41-5"><a href="path-analysis.html#cb41-5" aria-hidden="true" tabindex="-1"></a>         , <span class="at">style =</span> <span class="st">&#39;lisrel&#39;</span></span>
+<span id="cb41-6"><a href="path-analysis.html#cb41-6" aria-hidden="true" tabindex="-1"></a>         , <span class="at">curvePivot =</span> T</span>
+<span id="cb41-7"><a href="path-analysis.html#cb41-7" aria-hidden="true" tabindex="-1"></a>         , <span class="at">edge.label.cex =</span> <span class="fl">1.5</span></span>
+<span id="cb41-8"><a href="path-analysis.html#cb41-8" aria-hidden="true" tabindex="-1"></a>         , <span class="at">rotation =</span> <span class="dv">2</span></span>
+<span id="cb41-9"><a href="path-analysis.html#cb41-9" aria-hidden="true" tabindex="-1"></a>         , <span class="at">residuals =</span> T</span>
+<span id="cb41-10"><a href="path-analysis.html#cb41-10" aria-hidden="true" tabindex="-1"></a>         , <span class="at">sizeMan =</span> <span class="dv">10</span>)</span></code></pre></div>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-96-2.png" width="672" />
+Cool, this is the exact models he fits. Now, are these models any good? we can explore that question by summarising the fits (fit.1, fit.a and fit.b), but first, how many parameters can we estimate? This is one of the trickier parts of path analysis and SEM. We cannot simply think about the number of variables we have; we must think about our data in terms of a variance/co-variance matrix. For each variable we have one variance, in this case 4, each variable pair has a covariation, thus we have ([k^2 – k] / 2) covariances where k is the number of variables we have. Let´s calculate how many “pieces of information we have’</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="path-analysis.html#cb42-1" aria-hidden="true" tabindex="-1"></a>k  <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb42-2"><a href="path-analysis.html#cb42-2" aria-hidden="true" tabindex="-1"></a>co <span class="ot">&lt;-</span> ((k<span class="sc">^</span><span class="dv">2</span><span class="sc">-</span>k)<span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb42-3"><a href="path-analysis.html#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="co">#We have 4 variances and 6 covariances, this totals out at 10. This means that we can make a total 10 parameter estimates before we exhaust our degrees of freedom. Read the article more closely for a better understanding of degrees of freedom, they are fascinating.  </span></span></code></pre></div>
+<p>So, how many parameters are we estimating? in the first model(fit.1) we are actually estimating 10 parameters (three regressions, tree covariations, and 4 variances). This means that we have 0 degrees of freedom and a “perfect fit”. In second model(fit.a) we estimate 6 parameters(three regressions and tree variances) and in the last model(fit.b) we estimate 7 parameters(4 regressions and 3 variances). This can be tricky to wrap your mind around in the beginning but once you play around with it a bit it becomes more straight forward. Since we have two overidentified models we can compare the fit of them(the identified model fits perfectly), we can do this with the anova function.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="path-analysis.html#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(fit.a, fit.b)</span></code></pre></div>
+<pre><code>## Chi-Squared Difference Test
+## 
+##       Df    AIC    BIC   Chisq Chisq diff Df diff Pr(&gt;Chisq)    
+## fit.b  2 5565.9 5589.0  52.613                                  
+## fit.a  3 5632.6 5652.4 121.295     68.681       1  &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="path-analysis.html#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co">#note that this if not an F test but a chi-squared test(LRT)</span></span></code></pre></div>
+<p>The significance of the test indicates that model.b fits significantly better than model.a. However, the information difference in terms of AIC and BIC is very small. But this is an issue that doesn’t really apply itself well to entirely imaginary data. We don´t really have a good frame of reference in terms of theory.</p>
 </div>
-<div id="mediation-analysis" class="section level2 hasAnchor" number="10.2">
-<h2><span class="header-section-number">10.2</span> Mediation analysis<a href="path-analysis.html#mediation-analysis" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="workshop-analysis" class="section level2 hasAnchor" number="10.2">
+<h2><span class="header-section-number">10.2</span> workshop analysis<a href="path-analysis.html#workshop-analysis" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Now that we have gotten familiar with path analysis, we can try out another example. The data is still very much simulated, but this time we have to deal with some actual data points, not just generation by ourselves. The following analysis is based of the workshop on path analysis at GU. Hopefully i can take the data from the workshop without any issues. Let´s load the data (it should be available on the repository, hopefully.)</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="path-analysis.html#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven)</span>
+<span id="cb46-2"><a href="path-analysis.html#cb46-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read_sav</span>(<span class="st">&quot;data path analysis spring 22.sav&quot;</span>)</span>
+<span id="cb46-3"><a href="path-analysis.html#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="co">#Note. this is my path to the data and to access the file you need to import it yourself</span></span></code></pre></div>
+<p>These are the main packages we will be using. We have the usual suspects + MVN for analysis of multivariate normality.</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="path-analysis.html#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code></pre></div>
+<pre><code>## -- Attaching packages ------------------------------------------------- tidyverse 1.3.1 --</code></pre>
+<pre><code>## v ggplot2 3.3.5     v purrr   0.3.4
+## v tibble  3.1.6     v dplyr   1.0.7
+## v tidyr   1.1.4     v stringr 1.4.0
+## v readr   2.1.1     v forcats 0.5.1</code></pre>
+<pre><code>## -- Conflicts ---------------------------------------------------- tidyverse_conflicts() --
+## x purrr::%||%()   masks faux::%||%()
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="path-analysis.html#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lavaan)</span>
+<span id="cb51-2"><a href="path-analysis.html#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(semPlot)</span>
+<span id="cb51-3"><a href="path-analysis.html#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MVN)</span></code></pre></div>
+<p>Let´s take a peek at what we are working with.</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="path-analysis.html#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(data)</span></code></pre></div>
+<pre><code>##      stress       satisfaction   turnover_intent    demands         support     
+##  Min.   :0.600   Min.   :0.000   Min.   :0.000   Min.   :1.000   Min.   :1.000  
+##  1st Qu.:1.500   1st Qu.:2.000   1st Qu.:1.000   1st Qu.:2.000   1st Qu.:2.333  
+##  Median :2.000   Median :2.000   Median :1.500   Median :2.000   Median :2.667  
+##  Mean   :1.993   Mean   :2.578   Mean   :1.896   Mean   :2.363   Mean   :2.732  
+##  3rd Qu.:2.333   3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:3.000  
+##  Max.   :5.000   Max.   :5.000   Max.   :5.000   Max.   :5.000   Max.   :5.000</code></pre>
+<p>All variables are numeric and seems to range between 0 and 5. Note that some variables are ordinal, that is, they are whole numbers that are not continuous, that is, the distance between 1 and 2 cannot be assumed to be the same as between 3 and 4. If we want to assume this, the data needs to normally distributed. So let´s take a look at the distributions. Note however that this is NOT the normality assumption of the linear regression but rather an assumption of using ordinal data as if they were continuous.</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="path-analysis.html#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(stress))<span class="sc">+</span></span>
+<span id="cb54-2"><a href="path-analysis.html#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">colour =</span> <span class="st">&#39;blue&#39;</span>)<span class="sc">+</span></span>
+<span id="cb54-3"><a href="path-analysis.html#cb54-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code></pre></div>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-102-1.png" width="672" /></p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="path-analysis.html#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="co">#It has a normal look, and it seems to be continuous measure, this is good.</span></span>
+<span id="cb56-2"><a href="path-analysis.html#cb56-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-3"><a href="path-analysis.html#cb56-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(satisfaction))<span class="sc">+</span></span>
+<span id="cb56-4"><a href="path-analysis.html#cb56-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">colour =</span> <span class="st">&#39;blue&#39;</span>)<span class="sc">+</span></span>
+<span id="cb56-5"><a href="path-analysis.html#cb56-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code></pre></div>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-102-2.png" width="672" /></p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="path-analysis.html#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Again, quite normal looking - this is ordinal but could be treated as if continuous with some mental gymnastics</span></span>
+<span id="cb58-2"><a href="path-analysis.html#cb58-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-3"><a href="path-analysis.html#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(turnover_intent))<span class="sc">+</span></span>
+<span id="cb58-4"><a href="path-analysis.html#cb58-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">colour =</span> <span class="st">&#39;blue&#39;</span>)<span class="sc">+</span></span>
+<span id="cb58-5"><a href="path-analysis.html#cb58-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code></pre></div>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-102-3.png" width="672" /></p>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="path-analysis.html#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Interesting, perhaps its measured in half steps? but that begs the question why none of the higher valus such as 4.5 exists, it seems to stop after 2. Strange.</span></span>
+<span id="cb60-2"><a href="path-analysis.html#cb60-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb60-3"><a href="path-analysis.html#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(demands))<span class="sc">+</span></span>
+<span id="cb60-4"><a href="path-analysis.html#cb60-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">colour =</span> <span class="st">&#39;blue&#39;</span>)<span class="sc">+</span></span>
+<span id="cb60-5"><a href="path-analysis.html#cb60-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code></pre></div>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-102-4.png" width="672" /></p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="path-analysis.html#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Like satisfaction, looks pretty good. </span></span>
+<span id="cb62-2"><a href="path-analysis.html#cb62-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-3"><a href="path-analysis.html#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(support))<span class="sc">+</span></span>
+<span id="cb62-4"><a href="path-analysis.html#cb62-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">colour =</span> <span class="st">&#39;blue&#39;</span>)<span class="sc">+</span></span>
+<span id="cb62-5"><a href="path-analysis.html#cb62-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code></pre></div>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-102-5.png" width="672" /></p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="path-analysis.html#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Now this is a strange looking distribution...it looks to be a continuous measure and the density of the curve should be quite normal.</span></span>
+<span id="cb64-2"><a href="path-analysis.html#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-3"><a href="path-analysis.html#cb64-3" aria-hidden="true" tabindex="-1"></a><span class="co">#However, we need to check the normality of our predicted variables when we have them. Before that we can check the normality tests. One common measure is mardia, so let´s use that. We can also look at some of the qq-plots and the outlier measures. Let´s save the scores in a list called normality_diagnostics</span></span>
+<span id="cb64-4"><a href="path-analysis.html#cb64-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-5"><a href="path-analysis.html#cb64-5" aria-hidden="true" tabindex="-1"></a>normality_diagnostics <span class="ot">&lt;-</span> <span class="fu">mvn</span>(data</span>
+<span id="cb64-6"><a href="path-analysis.html#cb64-6" aria-hidden="true" tabindex="-1"></a>    , <span class="at">mvnTest =</span> <span class="st">&#39;mardia&#39;</span> <span class="co">#takes maridas test</span></span>
+<span id="cb64-7"><a href="path-analysis.html#cb64-7" aria-hidden="true" tabindex="-1"></a>    , <span class="at">multivariatePlot =</span> <span class="st">&#39;qq&#39;</span> <span class="co">#normal chi2 qq-plot</span></span>
+<span id="cb64-8"><a href="path-analysis.html#cb64-8" aria-hidden="true" tabindex="-1"></a>    , <span class="at">univariateTest =</span> <span class="st">&#39;AD&#39;</span> <span class="co">#anderson-darling test for univariate normality</span></span>
+<span id="cb64-9"><a href="path-analysis.html#cb64-9" aria-hidden="true" tabindex="-1"></a>    , <span class="at">showOutliers =</span> <span class="cn">TRUE</span> </span>
+<span id="cb64-10"><a href="path-analysis.html#cb64-10" aria-hidden="true" tabindex="-1"></a>    , <span class="at">showNewData =</span> <span class="cn">TRUE</span> <span class="co">#stores a tibble without the outliers</span></span>
+<span id="cb64-11"><a href="path-analysis.html#cb64-11" aria-hidden="true" tabindex="-1"></a>    , <span class="at">multivariateOutlierMethod =</span> <span class="st">&#39;adj&#39;</span>) <span class="co">#takes the adjusted mahalanobis distance</span></span></code></pre></div>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-102-6.png" width="672" /><img src="bookdownproj_files/figure-html/unnamed-chunk-102-7.png" width="672" /></p>
+<div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="path-analysis.html#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Checking the normality descriptives</span></span>
+<span id="cb65-2"><a href="path-analysis.html#cb65-2" aria-hidden="true" tabindex="-1"></a>normality_diagnostics<span class="sc">$</span>Descriptives</span></code></pre></div>
+<pre><code>##                   n     Mean   Std.Dev   Median Min Max     25th   75th      Skew
+## stress          322 1.992847 0.7447653 2.000000 0.6   5 1.500000 2.3325 1.5307216
+## satisfaction    322 2.577640 1.0715218 2.000000 0.0   5 2.000000 3.0000 0.6089998
+## turnover_intent 322 1.895963 1.2288900 1.500000 0.0   5 1.000000 3.0000 0.7192168
+## demands         322 2.363354 0.9145545 2.000000 1.0   5 2.000000 3.0000 0.4177021
+## support         322 2.731884 0.7106893 2.666667 1.0   5 2.333333 3.0000 0.2551844
+##                     Kurtosis
+## stress           4.593582827
+## satisfaction     0.130539733
+## turnover_intent -0.169774465
+## demands         -0.002784417
+## support          0.298869065</code></pre>
+<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="path-analysis.html#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Checking univariate normality </span></span>
+<span id="cb67-2"><a href="path-analysis.html#cb67-2" aria-hidden="true" tabindex="-1"></a>normality_diagnostics<span class="sc">$</span>univariateNormality</span></code></pre></div>
+<pre><code>##               Test        Variable Statistic   p value Normality
+## 1 Anderson-Darling     stress         8.7723  &lt;0.001      NO    
+## 2 Anderson-Darling  satisfaction     17.5045  &lt;0.001      NO    
+## 3 Anderson-Darling turnover_intent    9.3350  &lt;0.001      NO    
+## 4 Anderson-Darling     demands       16.5444  &lt;0.001      NO    
+## 5 Anderson-Darling     support        3.2055  &lt;0.001      NO</code></pre>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="path-analysis.html#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Checking multivariate normality</span></span>
+<span id="cb69-2"><a href="path-analysis.html#cb69-2" aria-hidden="true" tabindex="-1"></a>normality_diagnostics<span class="sc">$</span>multivariateNormality</span></code></pre></div>
+<pre><code>##              Test        Statistic              p value Result
+## 1 Mardia Skewness 460.776024749078 1.05636187815355e-75     NO
+## 2 Mardia Kurtosis 8.96312473441598                    0     NO
+## 3             MVN             &lt;NA&gt;                 &lt;NA&gt;     NO</code></pre>
+<p>So, nothing is normal and we have quite a few outliers according to Mahalanobis. If we want an outlier free data set the mvn function saves it for us. Let´s try to extract the clean data from the normality diagnostics.</p>
+<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="path-analysis.html#cb71-1" aria-hidden="true" tabindex="-1"></a>clean_data <span class="ot">&lt;-</span> normality_diagnostics<span class="sc">$</span>newData</span></code></pre></div>
+<p>Here we have the data without the 27 outliers indicated by the normality diagnostics. I´m not a fan of this type of diagnostics, but we can use the raw data as a type of sensitivity analysis later on, for now let’s move on using the clean data.</p>
+<p>Since we don´t really know what we are doing it´s always good to look at the correlations to inform us about what connections lie within our sample. So let´s do that and then try to find a good model for our data.</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="path-analysis.html#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="co">#This gives a normal correlation matrix</span></span>
+<span id="cb72-2"><a href="path-analysis.html#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(clean_data)</span></code></pre></div>
+<pre><code>##                      stress satisfaction turnover_intent     demands    support
+## stress           1.00000000   -0.4892677      0.22641261 -0.04095583 -0.3617246
+## satisfaction    -0.48926773    1.0000000     -0.59110506  0.12206989  0.3145087
+## turnover_intent  0.22641261   -0.5911051      1.00000000  0.03633829 -0.2111387
+## demands         -0.04095583    0.1220699      0.03633829  1.00000000  0.1464965
+## support         -0.36172462    0.3145087     -0.21113872  0.14649650  1.0000000</code></pre>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="path-analysis.html#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="co">#we can however plot the data out using the corplot function from the psych package without loading it by using the :: command like so: </span></span>
+<span id="cb74-2"><a href="path-analysis.html#cb74-2" aria-hidden="true" tabindex="-1"></a>psych<span class="sc">::</span><span class="fu">corPlot</span>(<span class="fu">cor</span>(clean_data))</span></code></pre></div>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-104-1.png" width="672" /></p>
+<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="path-analysis.html#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Note. the omitted variable in the bottom is turnover_intent</span></span></code></pre></div>
+<p>Stress, support and satisfaction seems to be correlated just fine. Demands seem to be a quite superfluous variable having low correlations to all other variables. So let´s build a model where stress and support are allowed to correlate and that both have a causal impact on the satisfaction you have in the workplace. Let´s also say that support and satisfaction have a causal impact on your turnover intent. Let´s specify this model using the lavaan syntax.</p>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="path-analysis.html#cb76-1" aria-hidden="true" tabindex="-1"></a>model<span class="fl">.1</span> <span class="ot">&lt;-</span> (<span class="st">&#39;</span></span>
+<span id="cb76-2"><a href="path-analysis.html#cb76-2" aria-hidden="true" tabindex="-1"></a><span class="st">             #regressions</span></span>
+<span id="cb76-3"><a href="path-analysis.html#cb76-3" aria-hidden="true" tabindex="-1"></a><span class="st">             satisfaction    ~ stress + support</span></span>
+<span id="cb76-4"><a href="path-analysis.html#cb76-4" aria-hidden="true" tabindex="-1"></a><span class="st">             turnover_intent ~ satisfaction </span></span>
+<span id="cb76-5"><a href="path-analysis.html#cb76-5" aria-hidden="true" tabindex="-1"></a><span class="st">             turnover_intent ~ support</span></span>
+<span id="cb76-6"><a href="path-analysis.html#cb76-6" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
+<span id="cb76-7"><a href="path-analysis.html#cb76-7" aria-hidden="true" tabindex="-1"></a><span class="st">             #covariates </span></span>
+<span id="cb76-8"><a href="path-analysis.html#cb76-8" aria-hidden="true" tabindex="-1"></a><span class="st">             stress ~~ support</span></span>
+<span id="cb76-9"><a href="path-analysis.html#cb76-9" aria-hidden="true" tabindex="-1"></a><span class="st">            &#39;</span>)</span></code></pre></div>
+<p>Now that we have our model - specified in text - we can fit that model using lavaans sem function just like we did before.</p>
+<div class="sourceCode" id="cb77"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb77-1"><a href="path-analysis.html#cb77-1" aria-hidden="true" tabindex="-1"></a>fit<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">sem</span>(  <span class="at">model =</span> model<span class="fl">.1</span>   <span class="co">#the model we want to fit</span></span>
+<span id="cb77-2"><a href="path-analysis.html#cb77-2" aria-hidden="true" tabindex="-1"></a>             , <span class="at">data =</span> clean_data <span class="co">#the data we want to fit the model on</span></span>
+<span id="cb77-3"><a href="path-analysis.html#cb77-3" aria-hidden="true" tabindex="-1"></a>             , <span class="at">estimator =</span> <span class="st">&#39;MLM&#39;</span> <span class="co">#the estimator we use (robust maximum likelihood)</span></span>
+<span id="cb77-4"><a href="path-analysis.html#cb77-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>Now that we have our fit, we can summarise the results</p>
+<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="path-analysis.html#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit<span class="fl">.1</span>                  <span class="co">#the fit we want to summarize </span></span>
+<span id="cb78-2"><a href="path-analysis.html#cb78-2" aria-hidden="true" tabindex="-1"></a>        , <span class="at">standardize  =</span> <span class="cn">TRUE</span>  <span class="co">#we want the standardised estimates</span></span>
+<span id="cb78-3"><a href="path-analysis.html#cb78-3" aria-hidden="true" tabindex="-1"></a>        , <span class="at">fit.measures =</span> <span class="cn">TRUE</span>  <span class="co">#we also want the fit measures(CFI, TLI)</span></span>
+<span id="cb78-4"><a href="path-analysis.html#cb78-4" aria-hidden="true" tabindex="-1"></a>        , <span class="at">rsquare      =</span> <span class="cn">TRUE</span>  <span class="co">#if we want to r2 for the model </span></span>
+<span id="cb78-5"><a href="path-analysis.html#cb78-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<pre><code>## lavaan 0.6-9 ended normally after 18 iterations
+## 
+##   Estimator                                         ML
+##   Optimization method                           NLMINB
+##   Number of model parameters                         9
+##                                                       
+##   Number of observations                           295
+##                                                       
+## Model Test User Model:
+##                                               Standard      Robust
+##   Test Statistic                                 3.014       2.867
+##   Degrees of freedom                                 1           1
+##   P-value (Chi-square)                           0.083       0.090
+##   Scaling correction factor                                  1.051
+##        Satorra-Bentler correction                                 
+## 
+## Model Test Baseline Model:
+## 
+##   Test statistic                               260.797     208.698
+##   Degrees of freedom                                 6           6
+##   P-value                                        0.000       0.000
+##   Scaling correction factor                                  1.250
+## 
+## User Model versus Baseline Model:
+## 
+##   Comparative Fit Index (CFI)                    0.992       0.991
+##   Tucker-Lewis Index (TLI)                       0.953       0.945
+##                                                                   
+##   Robust Comparative Fit Index (CFI)                         0.992
+##   Robust Tucker-Lewis Index (TLI)                            0.954
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)              -1420.264   -1420.264
+##   Loglikelihood unrestricted model (H1)      -1418.757   -1418.757
+##                                                                   
+##   Akaike (AIC)                                2858.528    2858.528
+##   Bayesian (BIC)                              2891.711    2891.711
+##   Sample-size adjusted Bayesian (BIC)         2863.169    2863.169
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.083       0.080
+##   90 Percent confidence interval - lower         0.000       0.000
+##   90 Percent confidence interval - upper         0.197       0.191
+##   P-value RMSEA &lt;= 0.05                          0.195       0.207
+##                                                                   
+##   Robust RMSEA                                               0.082
+##   90 Percent confidence interval - lower                     0.000
+##   90 Percent confidence interval - upper                     0.199
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.022       0.022
+## 
+## Parameter Estimates:
+## 
+##   Standard errors                           Robust.sem
+##   Information                                 Expected
+##   Information saturated (h1) model          Structured
+## 
+## Regressions:
+##                     Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##   satisfaction ~                                                         
+##     stress            -0.633    0.107   -5.902    0.000   -0.633   -0.432
+##     support            0.252    0.087    2.909    0.004    0.252    0.158
+##   turnover_intent ~                                                      
+##     satisfaction      -0.672    0.051  -13.158    0.000   -0.672   -0.582
+##     support           -0.051    0.084   -0.610    0.542   -0.051   -0.028
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##   stress ~~                                                             
+##     support          -0.178    0.044   -4.093    0.000   -0.178   -0.362
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##    .satisfaction      0.850    0.066   12.878    0.000    0.850    0.739
+##    .turnover_intnt    0.994    0.074   13.440    0.000    0.994    0.650
+##     stress            0.536    0.081    6.649    0.000    0.536    1.000
+##     support           0.454    0.043   10.580    0.000    0.454    1.000
+## 
+## R-Square:
+##                    Estimate
+##     satisfaction      0.261
+##     turnover_intnt    0.350</code></pre>
+<p>So our model fits remarkably well. Not even the chi2 is significant. Also, not how much better our model is than the baseline model. One bad thing is the fact that we are not very courageous, we only have one degree of freedom. Let´s plot this model out using semPlot and then try improving our fit even more.</p>
+<div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb80-1"><a href="path-analysis.html#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="co">#This is a more detailed notation of the semPlot alternatives</span></span>
+<span id="cb80-2"><a href="path-analysis.html#cb80-2" aria-hidden="true" tabindex="-1"></a><span class="fu">semPaths</span>( <span class="at">object =</span> fit<span class="fl">.1</span>       <span class="co">#the fit we want to plot(our model)</span></span>
+<span id="cb80-3"><a href="path-analysis.html#cb80-3" aria-hidden="true" tabindex="-1"></a>         , <span class="at">what  =</span> <span class="st">&#39;est, std&#39;</span>  <span class="co">#what we want to plot(the z-coefficients)</span></span>
+<span id="cb80-4"><a href="path-analysis.html#cb80-4" aria-hidden="true" tabindex="-1"></a>         , <span class="at">style =</span> <span class="st">&#39;lisrel&#39;</span>    <span class="co">#the style of the plot</span></span>
+<span id="cb80-5"><a href="path-analysis.html#cb80-5" aria-hidden="true" tabindex="-1"></a>         , <span class="at">curvePivot =</span> <span class="cn">TRUE</span>   <span class="co">#manipulates how the lines look</span></span>
+<span id="cb80-6"><a href="path-analysis.html#cb80-6" aria-hidden="true" tabindex="-1"></a>         , <span class="at">esize =</span> <span class="dv">4</span>           <span class="co">#the size of our lines</span></span>
+<span id="cb80-7"><a href="path-analysis.html#cb80-7" aria-hidden="true" tabindex="-1"></a>         , <span class="at">nCharNodes =</span> <span class="dv">0</span>      <span class="co">#takes all the characters in our manifest vars</span></span>
+<span id="cb80-8"><a href="path-analysis.html#cb80-8" aria-hidden="true" tabindex="-1"></a>         , <span class="at">edge.label.cex =</span> <span class="fl">1.5</span><span class="co">#how big the estimates are(indicated in &quot;what =&quot;)</span></span>
+<span id="cb80-9"><a href="path-analysis.html#cb80-9" aria-hidden="true" tabindex="-1"></a>         , <span class="at">residuals =</span> <span class="cn">FALSE</span>   <span class="co">#removes the residual loops</span></span>
+<span id="cb80-10"><a href="path-analysis.html#cb80-10" aria-hidden="true" tabindex="-1"></a>         , <span class="at">sizeMan =</span> <span class="dv">15</span>         <span class="co">#indicates the width of manifest variables</span></span>
+<span id="cb80-11"><a href="path-analysis.html#cb80-11" aria-hidden="true" tabindex="-1"></a>         , <span class="at">rotation =</span> <span class="dv">2</span>        <span class="co">#how we want to rotate the plot(wich direction)</span></span>
+<span id="cb80-12"><a href="path-analysis.html#cb80-12" aria-hidden="true" tabindex="-1"></a>         , <span class="at">theme =</span> <span class="st">&#39;Borkulo&#39;</span>)  <span class="co">#the theme we want to use, i like this one</span></span></code></pre></div>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-108-1.png" width="672" /></p>
+<div class="sourceCode" id="cb81"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb81-1"><a href="path-analysis.html#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Looks pretty good right? but notice the very weak trace between support and turnover intent and satisfaction! </span></span></code></pre></div>
+<p>Let´s interpret this. We can see that the correlation between support and stress is -.36 (as we saw in the correlation plot). We can also see that for every unit increase in stress satisfaction decreased with .43 standard deviations. We also see that for every unit increase in satisfaction we see a decrease in turnover_intent at .58 standard deviations. All these estimates, together with the unstandardized counterparts are available in the summary above. In the summary we also see an r2 of .26 in satisfaction and .35 in turnover intent, meaning that we can explain roughly 26% of the variation in satisfaction through stress and support and .35% of the variation in turnover intent through support and satisfaction. Pretty neat right?</p>
+<p>So where do we go from here? we have a model and its fits the data very well. We want to be brave scientists though, so we should refine our model and make some bolder claims. For example, let´s make the claim that support does NOT influence turnover intent, support does not even influence satisfaction. No, support actually has a one directional relationship with stress, that is the degree of support we have impacts our degree of stress, but stress does not influence how much support we have. Let´s specify this model and fit it.</p>
+<div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="path-analysis.html#cb82-1" aria-hidden="true" tabindex="-1"></a>model<span class="fl">.2</span> <span class="ot">&lt;-</span> (<span class="st">&#39;</span></span>
+<span id="cb82-2"><a href="path-analysis.html#cb82-2" aria-hidden="true" tabindex="-1"></a><span class="st">            #regressions</span></span>
+<span id="cb82-3"><a href="path-analysis.html#cb82-3" aria-hidden="true" tabindex="-1"></a><span class="st">            stress ~ support</span></span>
+<span id="cb82-4"><a href="path-analysis.html#cb82-4" aria-hidden="true" tabindex="-1"></a><span class="st">            satisfaction ~ stress</span></span>
+<span id="cb82-5"><a href="path-analysis.html#cb82-5" aria-hidden="true" tabindex="-1"></a><span class="st">            turnover_intent ~ satisfaction</span></span>
+<span id="cb82-6"><a href="path-analysis.html#cb82-6" aria-hidden="true" tabindex="-1"></a><span class="st">            &#39;</span>)</span>
+<span id="cb82-7"><a href="path-analysis.html#cb82-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb82-8"><a href="path-analysis.html#cb82-8" aria-hidden="true" tabindex="-1"></a>fit<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">sem</span>(  <span class="at">model =</span> model<span class="fl">.2</span>  </span>
+<span id="cb82-9"><a href="path-analysis.html#cb82-9" aria-hidden="true" tabindex="-1"></a>             , <span class="at">data  =</span> clean_data </span>
+<span id="cb82-10"><a href="path-analysis.html#cb82-10" aria-hidden="true" tabindex="-1"></a>             , <span class="at">estimator =</span> <span class="st">&#39;MLM&#39;</span>)</span>
+<span id="cb82-11"><a href="path-analysis.html#cb82-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb82-12"><a href="path-analysis.html#cb82-12" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit<span class="fl">.2</span>                  </span>
+<span id="cb82-13"><a href="path-analysis.html#cb82-13" aria-hidden="true" tabindex="-1"></a>        , <span class="at">standardize  =</span> <span class="cn">TRUE</span>  </span>
+<span id="cb82-14"><a href="path-analysis.html#cb82-14" aria-hidden="true" tabindex="-1"></a>        , <span class="at">fit.measures =</span> <span class="cn">TRUE</span> </span>
+<span id="cb82-15"><a href="path-analysis.html#cb82-15" aria-hidden="true" tabindex="-1"></a>        , <span class="at">rsquare      =</span> <span class="cn">TRUE</span>  </span>
+<span id="cb82-16"><a href="path-analysis.html#cb82-16" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<pre><code>## lavaan 0.6-9 ended normally after 14 iterations
+## 
+##   Estimator                                         ML
+##   Optimization method                           NLMINB
+##   Number of model parameters                         6
+##                                                       
+##   Number of observations                           295
+##                                                       
+## Model Test User Model:
+##                                               Standard      Robust
+##   Test Statistic                                11.898      12.009
+##   Degrees of freedom                                 3           3
+##   P-value (Chi-square)                           0.008       0.007
+##   Scaling correction factor                                  0.991
+##        Satorra-Bentler correction                                 
+## 
+## Model Test Baseline Model:
+## 
+##   Test statistic                               260.797     241.478
+##   Degrees of freedom                                 6           6
+##   P-value                                        0.000       0.000
+##   Scaling correction factor                                  1.080
+## 
+## User Model versus Baseline Model:
+## 
+##   Comparative Fit Index (CFI)                    0.965       0.962
+##   Tucker-Lewis Index (TLI)                       0.930       0.923
+##                                                                   
+##   Robust Comparative Fit Index (CFI)                         0.965
+##   Robust Tucker-Lewis Index (TLI)                            0.930
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)              -1122.743   -1122.743
+##   Loglikelihood unrestricted model (H1)      -1116.794   -1116.794
+##                                                                   
+##   Akaike (AIC)                                2257.486    2257.486
+##   Bayesian (BIC)                              2279.608    2279.608
+##   Sample-size adjusted Bayesian (BIC)         2260.580    2260.580
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.100       0.101
+##   90 Percent confidence interval - lower         0.045       0.046
+##   90 Percent confidence interval - upper         0.163       0.164
+##   P-value RMSEA &lt;= 0.05                          0.064       0.063
+##                                                                   
+##   Robust RMSEA                                               0.100
+##   90 Percent confidence interval - lower                     0.046
+##   90 Percent confidence interval - upper                     0.163
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.058       0.058
+## 
+## Parameter Estimates:
+## 
+##   Standard errors                           Robust.sem
+##   Information                                 Expected
+##   Information saturated (h1) model          Structured
+## 
+## Regressions:
+##                     Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##   stress ~                                                               
+##     support           -0.393    0.083   -4.756    0.000   -0.393   -0.362
+##   satisfaction ~                                                         
+##     stress            -0.717    0.104   -6.920    0.000   -0.717   -0.489
+##   turnover_intent ~                                                      
+##     satisfaction      -0.682    0.049  -13.783    0.000   -0.682   -0.591
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##    .stress            0.466    0.057    8.237    0.000    0.466    0.869
+##    .satisfaction      0.875    0.067   12.995    0.000    0.875    0.761
+##    .turnover_intnt    0.996    0.074   13.531    0.000    0.996    0.651
+## 
+## R-Square:
+##                    Estimate
+##     stress            0.131
+##     satisfaction      0.239
+##     turnover_intnt    0.349</code></pre>
+<p>By looking at the fit measures we can see that this model fits very well. But notice that we now have 3 degrees of freedom, that is, by further constraining the model (not allowing correlations between stress and support and removing the regression between support and turnover intent) we have expressed a more theoretically parsimonious model - very cool. Let´s make the path diagram and interpret the coefficients.</p>
+<div class="sourceCode" id="cb84"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb84-1"><a href="path-analysis.html#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="fu">semPaths</span>( <span class="at">object =</span> fit<span class="fl">.2</span>       </span>
+<span id="cb84-2"><a href="path-analysis.html#cb84-2" aria-hidden="true" tabindex="-1"></a>         , <span class="at">what  =</span> <span class="st">&#39;est, std&#39;</span> </span>
+<span id="cb84-3"><a href="path-analysis.html#cb84-3" aria-hidden="true" tabindex="-1"></a>         , <span class="at">style =</span> <span class="st">&#39;lisrel&#39;</span>   </span>
+<span id="cb84-4"><a href="path-analysis.html#cb84-4" aria-hidden="true" tabindex="-1"></a>         , <span class="at">curvePivot =</span> <span class="cn">TRUE</span>   </span>
+<span id="cb84-5"><a href="path-analysis.html#cb84-5" aria-hidden="true" tabindex="-1"></a>         , <span class="at">esize =</span> <span class="dv">10</span>   </span>
+<span id="cb84-6"><a href="path-analysis.html#cb84-6" aria-hidden="true" tabindex="-1"></a>         , <span class="at">asize =</span> <span class="dv">5</span>    <span class="co">#arrowhead size</span></span>
+<span id="cb84-7"><a href="path-analysis.html#cb84-7" aria-hidden="true" tabindex="-1"></a>         , <span class="at">sizeMan2 =</span> <span class="dv">3</span> <span class="co">#height of the manifest variables</span></span>
+<span id="cb84-8"><a href="path-analysis.html#cb84-8" aria-hidden="true" tabindex="-1"></a>         , <span class="at">nCharNodes =</span> <span class="dv">0</span>      </span>
+<span id="cb84-9"><a href="path-analysis.html#cb84-9" aria-hidden="true" tabindex="-1"></a>         , <span class="at">edge.label.cex =</span> <span class="fl">1.5</span></span>
+<span id="cb84-10"><a href="path-analysis.html#cb84-10" aria-hidden="true" tabindex="-1"></a>         , <span class="at">residuals =</span> <span class="cn">FALSE</span>  </span>
+<span id="cb84-11"><a href="path-analysis.html#cb84-11" aria-hidden="true" tabindex="-1"></a>         , <span class="at">sizeMan =</span> <span class="dv">15</span>   </span>
+<span id="cb84-12"><a href="path-analysis.html#cb84-12" aria-hidden="true" tabindex="-1"></a>         , <span class="at">rotation =</span> <span class="dv">2</span></span>
+<span id="cb84-13"><a href="path-analysis.html#cb84-13" aria-hidden="true" tabindex="-1"></a>         , <span class="at">theme =</span> <span class="st">&#39;Borkulo&#39;</span>)</span></code></pre></div>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-110-1.png" width="672" /></p>
+<div class="sourceCode" id="cb85"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb85-1"><a href="path-analysis.html#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Note. The new comments are just arguments we didn´t use in the previous plot</span></span></code></pre></div>
+<p>Cool, notice how we rephrased the connection between support and stress to a one-sided arrow. This can now be interpreted as a regression weight, that is, for every unit increase in support we se a .36 unit decrease in stress. We also see a bigger coefficient for the relationship between stress and satisfaction. This is likely due to the fact that we presume that support does not impact satisfaction but influences stress and thus, some of the variation we can explain in stress by support also influences satisfaction - i.e., stress mediates the relationship between support and satisfaction. The relationship between satisfaction and turnover intent is also different, but only by .01, that is, super small and an unimportant difference.</p>
+<p>Now that we have two overidentified models we can compare the fit of them. This is surprisingly easy; we only use the anova function and our to model fits. Note that this is not a GLM anova but an LRT test, that is, a likelihood ratio test.</p>
+<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="path-analysis.html#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(fit<span class="fl">.1</span>, fit<span class="fl">.2</span>)</span></code></pre></div>
+<pre><code>## Scaled Chi-Squared Difference Test (method = &quot;satorra.bentler.2001&quot;)
+## 
+## lavaan NOTE:
+##     The &quot;Chisq&quot; column contains standard test statistics, not the
+##     robust test that should be reported per model. A robust difference
+##     test is a function of two standard (not robust) statistics.
+##  
+##       Df    AIC    BIC   Chisq Chisq diff Df diff Pr(&gt;Chisq)   
+## fit.1  1 2858.5 2891.7  3.0141                                 
+## fit.2  3 2257.5 2279.6 11.8977     9.2498       2   0.009805 **
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>So what does this tell us? It tells us that the baseline model(fit.1) fits the data significantly better then the other model(fit.2). However, one should not that the AIC and BIC is lower for the fit.2 model, low scores on AIC and BIC is indicative of good fit, and models with low values are preferable to those with higher BIC and AIC. I do not feel particularly strongly about any of these models, but if I had to choose one I would choose the second one since I like parsimony, but the first model technically fits better (though its almost identified so do with that what you will). For more on the LRT you can see: <a href="http://econ.upf.edu/~satorra/dades/BryantSatorraPaperInPressSEM.pdf" class="uri">http://econ.upf.edu/~satorra/dades/BryantSatorraPaperInPressSEM.pdf</a></p>
+<p>One last thing we can do before we move on to other things is the check the modification indices. This is one cool thing that you can do with a path analysis that normal regression can´t really do. We will not use them for anything, but it is interesting to look at them.</p>
+<div class="sourceCode" id="cb88"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb88-1"><a href="path-analysis.html#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="fu">modificationindices</span>(fit<span class="fl">.2</span>) <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(<span class="sc">-</span>mi) <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">20</span>)</span></code></pre></div>
+<pre><code>##                lhs op             rhs    mi    epc sepc.lv sepc.all sepc.nox
+## 1          support  ~    satisfaction 8.440  0.131   0.131    0.208    0.208
+## 2     satisfaction  ~         support 8.440  0.252   0.252    0.158    0.235
+## 3           stress ~~    satisfaction 8.440  0.299   0.299    0.468    0.468
+## 4           stress  ~    satisfaction 8.440  0.341   0.341    0.500    0.500
+## 5           stress  ~ turnover_intent 6.336 -0.109  -0.109   -0.184   -0.184
+## 6          support  ~ turnover_intent 3.887 -0.067  -0.067   -0.124   -0.124
+## 7           stress ~~ turnover_intent 3.408 -0.082  -0.082   -0.121   -0.121
+## 8     satisfaction  ~ turnover_intent 2.351 -0.171  -0.171   -0.197   -0.197
+## 9  turnover_intent  ~          stress 2.351 -0.139  -0.139   -0.083   -0.083
+## 10    satisfaction ~~ turnover_intent 2.351 -0.170  -0.170   -0.182   -0.182
+## 11 turnover_intent  ~         support 0.298 -0.048  -0.048   -0.026   -0.039</code></pre>
+<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb90-1"><a href="path-analysis.html#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Note. the %&gt;% is a pipe function, they make code simpler to write so look into them! See the provided programming resources in the beginning of the book. </span></span></code></pre></div>
+<p>The modification indices (mi column) shows how much the chi2 of the model would drop if the parameter was included. Thus, indices over 3.84 will significantly increase the fit of the model. We have a few modifications we can make to our model, some of which improves the fit quite a bit.</p>
+<p>Lastly, let´s do a sensitivity check by running the second model through the raw data. That is, the data with the outliers included.</p>
+<div class="sourceCode" id="cb91"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb91-1"><a href="path-analysis.html#cb91-1" aria-hidden="true" tabindex="-1"></a>sensitivity.fit <span class="ot">&lt;-</span> <span class="fu">sem</span>(  <span class="at">model =</span> model<span class="fl">.2</span>  </span>
+<span id="cb91-2"><a href="path-analysis.html#cb91-2" aria-hidden="true" tabindex="-1"></a>                       , <span class="at">data  =</span> data </span>
+<span id="cb91-3"><a href="path-analysis.html#cb91-3" aria-hidden="true" tabindex="-1"></a>                       , <span class="at">estimator =</span> <span class="st">&#39;MLM&#39;</span>)</span>
+<span id="cb91-4"><a href="path-analysis.html#cb91-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb91-5"><a href="path-analysis.html#cb91-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sensitivity.fit, <span class="at">standardize  =</span> <span class="cn">TRUE</span>, <span class="at">fit.measures =</span> <span class="cn">TRUE</span> , <span class="at">rsquare =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<pre><code>## lavaan 0.6-9 ended normally after 13 iterations
+## 
+##   Estimator                                         ML
+##   Optimization method                           NLMINB
+##   Number of model parameters                         6
+##                                                       
+##   Number of observations                           322
+##                                                       
+## Model Test User Model:
+##                                               Standard      Robust
+##   Test Statistic                                10.159      10.615
+##   Degrees of freedom                                 3           3
+##   P-value (Chi-square)                           0.017       0.014
+##   Scaling correction factor                                  0.957
+##        Satorra-Bentler correction                                 
+## 
+## Model Test Baseline Model:
+## 
+##   Test statistic                               267.940     254.344
+##   Degrees of freedom                                 6           6
+##   P-value                                        0.000       0.000
+##   Scaling correction factor                                  1.053
+## 
+## User Model versus Baseline Model:
+## 
+##   Comparative Fit Index (CFI)                    0.973       0.969
+##   Tucker-Lewis Index (TLI)                       0.945       0.939
+##                                                                   
+##   Robust Comparative Fit Index (CFI)                         0.972
+##   Robust Tucker-Lewis Index (TLI)                            0.944
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)              -1234.025   -1234.025
+##   Loglikelihood unrestricted model (H1)      -1228.945   -1228.945
+##                                                                   
+##   Akaike (AIC)                                2480.049    2480.049
+##   Bayesian (BIC)                              2502.697    2502.697
+##   Sample-size adjusted Bayesian (BIC)         2483.665    2483.665
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.086       0.089
+##   90 Percent confidence interval - lower         0.032       0.034
+##   90 Percent confidence interval - upper         0.147       0.151
+##   P-value RMSEA &lt;= 0.05                          0.119       0.108
+##                                                                   
+##   Robust RMSEA                                               0.087
+##   90 Percent confidence interval - lower                     0.034
+##   90 Percent confidence interval - upper                     0.146
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.054       0.054
+## 
+## Parameter Estimates:
+## 
+##   Standard errors                           Robust.sem
+##   Information                                 Expected
+##   Information saturated (h1) model          Structured
+## 
+## Regressions:
+##                     Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##   stress ~                                                               
+##     support           -0.346    0.073   -4.730    0.000   -0.346   -0.330
+##   satisfaction ~                                                         
+##     stress            -0.694    0.099   -7.007    0.000   -0.694   -0.482
+##   turnover_intent ~                                                      
+##     satisfaction      -0.672    0.048  -14.120    0.000   -0.672   -0.586
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##    .stress            0.493    0.060    8.155    0.000    0.493    0.891
+##    .satisfaction      0.878    0.065   13.536    0.000    0.878    0.767
+##    .turnover_intnt    0.989    0.074   13.405    0.000    0.989    0.657
+## 
+## R-Square:
+##                    Estimate
+##     stress            0.109
+##     satisfaction      0.233
+##     turnover_intnt    0.343</code></pre>
+<div class="sourceCode" id="cb93"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb93-1"><a href="path-analysis.html#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(sensitivity.fit, fit<span class="fl">.2</span>)</span></code></pre></div>
+<pre><code>## Warning in lavTestLRT(object = object, ..., model.names = NAMES): lavaan WARNING: some
+## models have the same degrees of freedom</code></pre>
+<pre><code>## Scaled Chi-Squared Difference Test (method = &quot;satorra.bentler.2001&quot;)
+## 
+## lavaan NOTE:
+##     The &quot;Chisq&quot; column contains standard test statistics, not the
+##     robust test that should be reported per model. A robust difference
+##     test is a function of two standard (not robust) statistics.
+##  
+##                 Df    AIC    BIC  Chisq Chisq diff Df diff Pr(&gt;Chisq)
+## sensitivity.fit  3 2480.1 2502.7 10.159                              
+## fit.2            3 2257.5 2279.6 11.898     1.7384       0</code></pre>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="path-analysis.html#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Note. We are comparing two models with the same degrees of freedom, this is not very appropriate since they are not nested (and on different data) but it’s nice to see the measures anyways.</span></span></code></pre></div>
+<p>So, the model based on the raw data is not that different from we get when we have cleaned the data. This becomes even more apparent if we were to check the parameter estimates for the two models like so:</p>
+<div class="sourceCode" id="cb97"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb97-1"><a href="path-analysis.html#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="fu">parameterestimates</span>(fit<span class="fl">.2</span>)</span></code></pre></div>
+<pre><code>##               lhs op             rhs    est    se       z pvalue ci.lower ci.upper
+## 1          stress  ~         support -0.393 0.083  -4.756      0   -0.555   -0.231
+## 2    satisfaction  ~          stress -0.717 0.104  -6.920      0   -0.920   -0.514
+## 3 turnover_intent  ~    satisfaction -0.682 0.049 -13.783      0   -0.779   -0.585
+## 4          stress ~~          stress  0.466 0.057   8.237      0    0.355    0.577
+## 5    satisfaction ~~    satisfaction  0.875 0.067  12.995      0    0.743    1.007
+## 6 turnover_intent ~~ turnover_intent  0.996 0.074  13.531      0    0.851    1.140
+## 7         support ~~         support  0.454 0.000      NA     NA    0.454    0.454</code></pre>
+<div class="sourceCode" id="cb99"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb99-1"><a href="path-analysis.html#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="fu">parameterestimates</span>(sensitivity.fit)</span></code></pre></div>
+<pre><code>##               lhs op             rhs    est    se       z pvalue ci.lower ci.upper
+## 1          stress  ~         support -0.346 0.073  -4.730      0   -0.489   -0.202
+## 2    satisfaction  ~          stress -0.694 0.099  -7.007      0   -0.888   -0.500
+## 3 turnover_intent  ~    satisfaction -0.672 0.048 -14.120      0   -0.765   -0.579
+## 4          stress ~~          stress  0.493 0.060   8.155      0    0.374    0.611
+## 5    satisfaction ~~    satisfaction  0.878 0.065  13.536      0    0.751    1.005
+## 6 turnover_intent ~~ turnover_intent  0.989 0.074  13.405      0    0.844    1.133
+## 7         support ~~         support  0.504 0.000      NA     NA    0.504    0.504</code></pre>
+<p>They are pretty much the same parameter estimates, certainly not significantly different. So, what more can we do for this fun little analysis? we can do some bootstrapping. Lavaan has a really nice bootstrapping function that gives a lot of freedom to choose what to do with the estimates. Let´s bootstrap all estimates from the second model(fit.2) and take a percentile intervall for them. Note that this can take a few seconds.</p>
+<div class="sourceCode" id="cb101"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb101-1"><a href="path-analysis.html#cb101-1" aria-hidden="true" tabindex="-1"></a>boot_sample <span class="ot">&lt;-</span> <span class="fu">bootstrapLavaan</span>( <span class="at">object =</span> fit<span class="fl">.2</span> <span class="co">#the fit we want to sample</span></span>
+<span id="cb101-2"><a href="path-analysis.html#cb101-2" aria-hidden="true" tabindex="-1"></a>                               , <span class="at">R     =</span> <span class="dv">1000</span>  <span class="co">#the number of iterations we want</span></span>
+<span id="cb101-3"><a href="path-analysis.html#cb101-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>Notice that “boot_sample” is a matrix of many estimates. Let´s put the regression coefficients in a dataframe and make our intervals.</p>
+<div class="sourceCode" id="cb102"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb102-1"><a href="path-analysis.html#cb102-1" aria-hidden="true" tabindex="-1"></a>boot_sample <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(boot_sample)</span>
+<span id="cb102-2"><a href="path-analysis.html#cb102-2" aria-hidden="true" tabindex="-1"></a>boot_coef   <span class="ot">&lt;-</span> <span class="fu">select</span>(boot_sample  <span class="co">#the data we want to take variables/cols from</span></span>
+<span id="cb102-3"><a href="path-analysis.html#cb102-3" aria-hidden="true" tabindex="-1"></a>                      , <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,)) <span class="co">#a list of the cols we want to take(1,2,3)</span></span>
+<span id="cb102-4"><a href="path-analysis.html#cb102-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-5"><a href="path-analysis.html#cb102-5" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(boot_coef<span class="sc">$</span>stress.support     <span class="co">#the estimate we want to take intervals on</span></span>
+<span id="cb102-6"><a href="path-analysis.html#cb102-6" aria-hidden="true" tabindex="-1"></a>         , <span class="at">probs =</span> <span class="fu">c</span>(.<span class="dv">025</span>, .<span class="dv">5</span>, .<span class="dv">975</span>)) <span class="co">#the percentile points we want to see</span></span></code></pre></div>
+<pre><code>##       2.5%        50%      97.5% 
+## -0.5489199 -0.3825642 -0.2386760</code></pre>
+<div class="sourceCode" id="cb104"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb104-1"><a href="path-analysis.html#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="co">#We see that the regression weight ranges between -.55 and -.24</span></span>
+<span id="cb104-2"><a href="path-analysis.html#cb104-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb104-3"><a href="path-analysis.html#cb104-3" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(boot_coef<span class="sc">$</span>satisfaction.stress     </span>
+<span id="cb104-4"><a href="path-analysis.html#cb104-4" aria-hidden="true" tabindex="-1"></a>         , <span class="at">probs =</span> <span class="fu">c</span>(.<span class="dv">025</span>, .<span class="dv">5</span>, .<span class="dv">975</span>))</span></code></pre></div>
+<pre><code>##       2.5%        50%      97.5% 
+## -0.9758261 -0.7247085 -0.5454487</code></pre>
+<div class="sourceCode" id="cb106"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb106-1"><a href="path-analysis.html#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="co">#We see that the regression weight ranges between -.98 and -.55</span></span>
+<span id="cb106-2"><a href="path-analysis.html#cb106-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb106-3"><a href="path-analysis.html#cb106-3" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(boot_coef<span class="sc">$</span>turnover_intent.satisfaction     </span>
+<span id="cb106-4"><a href="path-analysis.html#cb106-4" aria-hidden="true" tabindex="-1"></a>         , <span class="at">probs =</span> <span class="fu">c</span>(.<span class="dv">025</span>, .<span class="dv">5</span>, .<span class="dv">975</span>))</span></code></pre></div>
+<pre><code>##       2.5%        50%      97.5% 
+## -0.7719642 -0.6811282 -0.5928512</code></pre>
+<div class="sourceCode" id="cb108"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb108-1"><a href="path-analysis.html#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="co">#We see that the regression weight ranges between -.77 and -.59</span></span></code></pre></div>
+<p>This is not super interesting, but it is pretty cool and also kind of illustrates what you can do with bootstrapping in a more manual way. There are of course much more you can do than to take percentile intervals of the regression weights but that lies beyond the specific realm of path analysis.</p>
+</div>
+<div id="multiple-regressionagain" class="section level2 hasAnchor" number="10.3">
+<h2><span class="header-section-number">10.3</span> Multiple regression(again)<a href="path-analysis.html#multiple-regressionagain" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>By now you should feel good, both with lavaan semPlot and the general procedure for path analysis. So, let’s take a step back and rework the good ´ol Field example for multiple regression, but with a path analysis. And don´t worry, this will be short and sweet :)</p>
+</div>
+<div id="mediation-analysis" class="section level2 hasAnchor" number="10.4">
+<h2><span class="header-section-number">10.4</span> Mediation analysis<a href="path-analysis.html#mediation-analysis" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>In the Field book he gives an example of mediation with the data set from Lambert et al.,(2012). Since we are very comfortable with working with paths, mediation becomes a simple thing. In the regression example in the previous chapter we only estimated direct effects, that is, effects of a on c (or x on y if you prefer those letters). Mediation can estimate both direct and indirect effects. The indirect effect is the multiplication of path a and path b. Let´s load the data. While the process of a moderation analysis is quite complicated in terms of functions and packages - as we saw in the regression part of the book, with mediation we can rely on good ´ol lavaan.</p>
+<div class="sourceCode" id="cb109"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb109-1"><a href="path-analysis.html#cb109-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Packages we need</span></span>
+<span id="cb109-2"><a href="path-analysis.html#cb109-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb109-3"><a href="path-analysis.html#cb109-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lavaan)</span>
+<span id="cb109-4"><a href="path-analysis.html#cb109-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(semPlot)</span></code></pre></div>
+<div class="sourceCode" id="cb110"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb110-1"><a href="path-analysis.html#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Loading the data</span></span>
+<span id="cb110-2"><a href="path-analysis.html#cb110-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read_sav</span>(<span class="st">&quot;Lambert et al. (2012).sav&quot;</span>)</span>
+<span id="cb110-3"><a href="path-analysis.html#cb110-3" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(data) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&#39;consumption&#39;</span>, <span class="st">&#39;ln_porn&#39;</span>, <span class="st">&#39;commit&#39;</span>, <span class="st">&#39;infi&#39;</span>, <span class="st">&#39;hook_ups&#39;</span>)</span></code></pre></div>
+<p>Let´s specify the model from the Field book.</p>
+<div class="sourceCode" id="cb111"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb111-1"><a href="path-analysis.html#cb111-1" aria-hidden="true" tabindex="-1"></a>med_model<span class="fl">.1</span> <span class="ot">&lt;-</span> (<span class="st">&#39; </span></span>
+<span id="cb111-2"><a href="path-analysis.html#cb111-2" aria-hidden="true" tabindex="-1"></a><span class="st"># Direct effect</span></span>
+<span id="cb111-3"><a href="path-analysis.html#cb111-3" aria-hidden="true" tabindex="-1"></a><span class="st">infi ~ c*consumption</span></span>
+<span id="cb111-4"><a href="path-analysis.html#cb111-4" aria-hidden="true" tabindex="-1"></a><span class="st">               </span></span>
+<span id="cb111-5"><a href="path-analysis.html#cb111-5" aria-hidden="true" tabindex="-1"></a><span class="st"># Mediator</span></span>
+<span id="cb111-6"><a href="path-analysis.html#cb111-6" aria-hidden="true" tabindex="-1"></a><span class="st">commit ~   a*consumption</span></span>
+<span id="cb111-7"><a href="path-analysis.html#cb111-7" aria-hidden="true" tabindex="-1"></a><span class="st">infi   ~   b*commit</span></span>
+<span id="cb111-8"><a href="path-analysis.html#cb111-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb111-9"><a href="path-analysis.html#cb111-9" aria-hidden="true" tabindex="-1"></a><span class="st"># Indirect effect (a*b)</span></span>
+<span id="cb111-10"><a href="path-analysis.html#cb111-10" aria-hidden="true" tabindex="-1"></a><span class="st">ab := a*b</span></span>
+<span id="cb111-11"><a href="path-analysis.html#cb111-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb111-12"><a href="path-analysis.html#cb111-12" aria-hidden="true" tabindex="-1"></a><span class="st"># Total effect</span></span>
+<span id="cb111-13"><a href="path-analysis.html#cb111-13" aria-hidden="true" tabindex="-1"></a><span class="st">total := c + (a*b)</span></span>
+<span id="cb111-14"><a href="path-analysis.html#cb111-14" aria-hidden="true" tabindex="-1"></a><span class="st">         &#39;</span>)</span>
+<span id="cb111-15"><a href="path-analysis.html#cb111-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb111-16"><a href="path-analysis.html#cb111-16" aria-hidden="true" tabindex="-1"></a><span class="co">#Note. The defined variables a, b and c are needed for the mediation analysis to work. These are the paths of our model, without them we cannot calculate our main and indirect effects! the lavaan symbol &#39;:=&#39; describes a new parameter dependent on our specified model. In this case it´s the regression weights (I believe)</span></span></code></pre></div>
+<p>Let´s fit and summarise the result of this model.</p>
+<div class="sourceCode" id="cb112"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb112-1"><a href="path-analysis.html#cb112-1" aria-hidden="true" tabindex="-1"></a>med_fit<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">sem</span>(med_model<span class="fl">.1</span>, data)</span>
+<span id="cb112-2"><a href="path-analysis.html#cb112-2" aria-hidden="true" tabindex="-1"></a><span class="co">#Summarising a lavaan can take a lot of commands, I will note what they do here as I have done before, but note that there are many other alternatives you can use! </span></span>
+<span id="cb112-3"><a href="path-analysis.html#cb112-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(med_fit<span class="fl">.1</span>            <span class="co">#the model we want to use(med_fit.1)</span></span>
+<span id="cb112-4"><a href="path-analysis.html#cb112-4" aria-hidden="true" tabindex="-1"></a>        , <span class="at">standardize =</span>  T   <span class="co">#do we want a standardized estimate? T mean true/yes</span></span>
+<span id="cb112-5"><a href="path-analysis.html#cb112-5" aria-hidden="true" tabindex="-1"></a>        , <span class="at">fit.measures =</span> T   <span class="co">#do we want fit measures? </span></span>
+<span id="cb112-6"><a href="path-analysis.html#cb112-6" aria-hidden="true" tabindex="-1"></a>        , <span class="at">rsquare =</span> T)       <span class="co">#do we want r2</span></span></code></pre></div>
+<pre><code>## lavaan 0.6-9 ended normally after 13 iterations
+## 
+##   Estimator                                         ML
+##   Optimization method                           NLMINB
+##   Number of model parameters                         5
+##                                                       
+##                                                   Used       Total
+##   Number of observations                           239         240
+##                                                                   
+## Model Test User Model:
+##                                                       
+##   Test statistic                                 0.000
+##   Degrees of freedom                                 0
+## 
+## Model Test Baseline Model:
+## 
+##   Test statistic                                35.895
+##   Degrees of freedom                                 3
+##   P-value                                        0.000
+## 
+## User Model versus Baseline Model:
+## 
+##   Comparative Fit Index (CFI)                    1.000
+##   Tucker-Lewis Index (TLI)                       1.000
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)               -501.418
+##   Loglikelihood unrestricted model (H1)       -501.418
+##                                                       
+##   Akaike (AIC)                                1012.836
+##   Bayesian (BIC)                              1030.218
+##   Sample-size adjusted Bayesian (BIC)         1014.369
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.000
+##   90 Percent confidence interval - lower         0.000
+##   90 Percent confidence interval - upper         0.000
+##   P-value RMSEA &lt;= 0.05                             NA
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Standard errors                             Standard
+##   Information                                 Expected
+##   Information saturated (h1) model          Structured
+## 
+## Regressions:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##   infi ~                                                                
+##     consumptin (c)    0.107    0.038    2.797    0.005    0.107    0.171
+##   commit ~                                                              
+##     consumptin (a)   -0.092    0.042   -2.175    0.030   -0.092   -0.139
+##   infi ~                                                                
+##     commit     (b)   -0.268    0.058   -4.612    0.000   -0.268   -0.282
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##    .infi              0.429    0.039   10.932    0.000    0.429    0.878
+##    .commit            0.531    0.049   10.932    0.000    0.531    0.981
+## 
+## R-Square:
+##                    Estimate
+##     infi              0.122
+##     commit            0.019
+## 
+## Defined Parameters:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##     ab                0.025    0.013    1.967    0.049    0.025    0.039
+##     total             0.132    0.040    3.329    0.001    0.132    0.211</code></pre>
+<p>Nice, this is exactly what we want. Notice also that our model is saturated/identified, that is, it has 0 degrees of freedom. This means that we can´t really assess the fit of this model.
+Let´s make a quick interpretation. Infidelity increases with .107 units for every unit increase in consumption. Commitment decreases by .092 units for every increase in consumption and infidelity decreases with .268 for every unit increase in commitment. ´ab´ is our indirect effect, that is, .025. Which can be interpreted as a kind of r2.</p>
+<div class="sourceCode" id="cb114"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb114-1"><a href="path-analysis.html#cb114-1" aria-hidden="true" tabindex="-1"></a><span class="fu">semPaths</span>(med_fit<span class="fl">.1</span></span>
+<span id="cb114-2"><a href="path-analysis.html#cb114-2" aria-hidden="true" tabindex="-1"></a>         , <span class="at">what =</span> <span class="st">&#39;est, std&#39;</span></span>
+<span id="cb114-3"><a href="path-analysis.html#cb114-3" aria-hidden="true" tabindex="-1"></a>         , <span class="at">style =</span> <span class="st">&#39;lisrel&#39;</span></span>
+<span id="cb114-4"><a href="path-analysis.html#cb114-4" aria-hidden="true" tabindex="-1"></a>         , <span class="at">layout =</span> <span class="st">&#39;tree&#39;</span></span>
+<span id="cb114-5"><a href="path-analysis.html#cb114-5" aria-hidden="true" tabindex="-1"></a>         , <span class="at">nCharNodes =</span> <span class="dv">0</span></span>
+<span id="cb114-6"><a href="path-analysis.html#cb114-6" aria-hidden="true" tabindex="-1"></a>         , <span class="at">edge.label.cex =</span> <span class="fl">1.5</span></span>
+<span id="cb114-7"><a href="path-analysis.html#cb114-7" aria-hidden="true" tabindex="-1"></a>         , <span class="at">sizeMan =</span> <span class="dv">20</span></span>
+<span id="cb114-8"><a href="path-analysis.html#cb114-8" aria-hidden="true" tabindex="-1"></a>         , <span class="at">residuals =</span> F</span>
+<span id="cb114-9"><a href="path-analysis.html#cb114-9" aria-hidden="true" tabindex="-1"></a>         , <span class="at">rotation =</span> <span class="dv">4</span></span>
+<span id="cb114-10"><a href="path-analysis.html#cb114-10" aria-hidden="true" tabindex="-1"></a>         , <span class="at">theme =</span> <span class="st">&#39;Borkulo&#39;</span>)</span></code></pre></div>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-120-1.png" width="672" /></p>
+<div class="sourceCode" id="cb115"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb115-1"><a href="path-analysis.html#cb115-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Note that this is NOT the same output as in the field book. He uses the log transformed variable for consumption. So let´s recreate his model.</span></span></code></pre></div>
+<div class="sourceCode" id="cb116"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb116-1"><a href="path-analysis.html#cb116-1" aria-hidden="true" tabindex="-1"></a>med_model<span class="fl">.2</span> <span class="ot">&lt;-</span> (<span class="st">&#39; </span></span>
+<span id="cb116-2"><a href="path-analysis.html#cb116-2" aria-hidden="true" tabindex="-1"></a><span class="st"># direct effect</span></span>
+<span id="cb116-3"><a href="path-analysis.html#cb116-3" aria-hidden="true" tabindex="-1"></a><span class="st">infi ~ c*ln_porn</span></span>
+<span id="cb116-4"><a href="path-analysis.html#cb116-4" aria-hidden="true" tabindex="-1"></a><span class="st">               </span></span>
+<span id="cb116-5"><a href="path-analysis.html#cb116-5" aria-hidden="true" tabindex="-1"></a><span class="st"># mediator</span></span>
+<span id="cb116-6"><a href="path-analysis.html#cb116-6" aria-hidden="true" tabindex="-1"></a><span class="st">commit ~   a*ln_porn</span></span>
+<span id="cb116-7"><a href="path-analysis.html#cb116-7" aria-hidden="true" tabindex="-1"></a><span class="st">infi   ~   b*commit</span></span>
+<span id="cb116-8"><a href="path-analysis.html#cb116-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb116-9"><a href="path-analysis.html#cb116-9" aria-hidden="true" tabindex="-1"></a><span class="st"># indirect effect (a*b)</span></span>
+<span id="cb116-10"><a href="path-analysis.html#cb116-10" aria-hidden="true" tabindex="-1"></a><span class="st">ab := a*b</span></span>
+<span id="cb116-11"><a href="path-analysis.html#cb116-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb116-12"><a href="path-analysis.html#cb116-12" aria-hidden="true" tabindex="-1"></a><span class="st"># total effect</span></span>
+<span id="cb116-13"><a href="path-analysis.html#cb116-13" aria-hidden="true" tabindex="-1"></a><span class="st">total := c + (a*b)</span></span>
+<span id="cb116-14"><a href="path-analysis.html#cb116-14" aria-hidden="true" tabindex="-1"></a><span class="st">         &#39;</span>)</span>
+<span id="cb116-15"><a href="path-analysis.html#cb116-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb116-16"><a href="path-analysis.html#cb116-16" aria-hidden="true" tabindex="-1"></a>med_fit<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">sem</span>(med_model<span class="fl">.2</span>, data)</span>
+<span id="cb116-17"><a href="path-analysis.html#cb116-17" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(med_fit<span class="fl">.2</span>, <span class="at">standardize =</span> T, <span class="at">fit.measures =</span> T, <span class="at">rsquare =</span> T)</span></code></pre></div>
+<pre><code>## lavaan 0.6-9 ended normally after 17 iterations
+## 
+##   Estimator                                         ML
+##   Optimization method                           NLMINB
+##   Number of model parameters                         5
+##                                                       
+##                                                   Used       Total
+##   Number of observations                           239         240
+##                                                                   
+## Model Test User Model:
+##                                                       
+##   Test statistic                                 0.000
+##   Degrees of freedom                                 0
+## 
+## Model Test Baseline Model:
+## 
+##   Test statistic                                33.895
+##   Degrees of freedom                                 3
+##   P-value                                        0.000
+## 
+## User Model versus Baseline Model:
+## 
+##   Comparative Fit Index (CFI)                    1.000
+##   Tucker-Lewis Index (TLI)                       1.000
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)               -502.418
+##   Loglikelihood unrestricted model (H1)       -502.418
+##                                                       
+##   Akaike (AIC)                                1014.835
+##   Bayesian (BIC)                              1032.218
+##   Sample-size adjusted Bayesian (BIC)         1016.369
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.000
+##   90 Percent confidence interval - lower         0.000
+##   90 Percent confidence interval - upper         0.000
+##   P-value RMSEA &lt;= 0.05                             NA
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Standard errors                             Standard
+##   Information                                 Expected
+##   Information saturated (h1) model          Structured
+## 
+## Regressions:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##   infi ~                                                                
+##     ln_porn    (c)    0.457    0.193    2.365    0.018    0.457    0.145
+##   commit ~                                                              
+##     ln_porn    (a)   -0.470    0.212   -2.215    0.027   -0.470   -0.142
+##   infi ~                                                                
+##     commit     (b)   -0.271    0.058   -4.642    0.000   -0.271   -0.285
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##    .infi              0.432    0.040   10.932    0.000    0.432    0.886
+##    .commit            0.531    0.049   10.932    0.000    0.531    0.980
+## 
+## R-Square:
+##                    Estimate
+##     infi              0.114
+##     commit            0.020
+## 
+## Defined Parameters:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##     ab                0.127    0.064    1.999    0.046    0.127    0.040
+##     total             0.585    0.200    2.925    0.003    0.585    0.186</code></pre>
+<div class="sourceCode" id="cb118"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb118-1"><a href="path-analysis.html#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="fu">semPaths</span>(med_fit<span class="fl">.2</span></span>
+<span id="cb118-2"><a href="path-analysis.html#cb118-2" aria-hidden="true" tabindex="-1"></a>         , <span class="at">what =</span> <span class="st">&#39;est&#39;</span></span>
+<span id="cb118-3"><a href="path-analysis.html#cb118-3" aria-hidden="true" tabindex="-1"></a>         , <span class="at">style =</span> <span class="st">&#39;lisrel&#39;</span></span>
+<span id="cb118-4"><a href="path-analysis.html#cb118-4" aria-hidden="true" tabindex="-1"></a>         , <span class="at">layout =</span> <span class="st">&#39;tree&#39;</span></span>
+<span id="cb118-5"><a href="path-analysis.html#cb118-5" aria-hidden="true" tabindex="-1"></a>         , <span class="at">nCharNodes =</span> <span class="dv">0</span></span>
+<span id="cb118-6"><a href="path-analysis.html#cb118-6" aria-hidden="true" tabindex="-1"></a>         , <span class="at">edge.label.cex =</span> <span class="fl">1.5</span></span>
+<span id="cb118-7"><a href="path-analysis.html#cb118-7" aria-hidden="true" tabindex="-1"></a>         , <span class="at">sizeMan =</span> <span class="dv">20</span></span>
+<span id="cb118-8"><a href="path-analysis.html#cb118-8" aria-hidden="true" tabindex="-1"></a>         , <span class="at">residuals =</span> F</span>
+<span id="cb118-9"><a href="path-analysis.html#cb118-9" aria-hidden="true" tabindex="-1"></a>         , <span class="at">theme =</span> <span class="st">&#39;Borkulo&#39;</span></span>
+<span id="cb118-10"><a href="path-analysis.html#cb118-10" aria-hidden="true" tabindex="-1"></a>         , <span class="at">rotation =</span> <span class="dv">4</span>)</span></code></pre></div>
+<p><img src="bookdownproj_files/figure-html/unnamed-chunk-121-1.png" width="672" /></p>
+<div class="sourceCode" id="cb119"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb119-1"><a href="path-analysis.html#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Very nice, we have recreated the findings from Field. </span></span></code></pre></div>
+<p>These are the same models, but with the log transformation. The reason why I didn´t use that in the first model is because it´s harder to interpret. I have a hard time understanding what this indirect effect of .127 means since it’s a combination of the influence of a log variable, through a variable that is not logged. A smarter person than I will have to describe what this means.</p>
+<p>Field also uses bootstrapped standard errors; this can be specified in the fit portion of our workflow. Let´s refit our second model but with bootstrapped SEs.</p>
+<div class="sourceCode" id="cb120"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb120-1"><a href="path-analysis.html#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="co">#it´s going to take a few seconds so do not fret if you don’t get an output </span></span>
+<span id="cb120-2"><a href="path-analysis.html#cb120-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb120-3"><a href="path-analysis.html#cb120-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">234</span>) <span class="co">#setting seed so that we can recreate the random values</span></span>
+<span id="cb120-4"><a href="path-analysis.html#cb120-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb120-5"><a href="path-analysis.html#cb120-5" aria-hidden="true" tabindex="-1"></a>med_fit<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">sem</span>(med_model<span class="fl">.2</span>        <span class="co">#what model we want to fit </span></span>
+<span id="cb120-6"><a href="path-analysis.html#cb120-6" aria-hidden="true" tabindex="-1"></a>                 , <span class="at">se =</span> <span class="st">&#39;bootstrap&#39;</span> <span class="co">#how do we want to estimate the std.err?</span></span>
+<span id="cb120-7"><a href="path-analysis.html#cb120-7" aria-hidden="true" tabindex="-1"></a>                 , data)            <span class="co">#indicates the data we want to fit the model on. </span></span>
+<span id="cb120-8"><a href="path-analysis.html#cb120-8" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(med_fit<span class="fl">.2</span>, <span class="at">standardize =</span> T, <span class="at">fit.measures =</span> T, <span class="at">rsquare =</span> T)</span></code></pre></div>
+<pre><code>## lavaan 0.6-9 ended normally after 17 iterations
+## 
+##   Estimator                                         ML
+##   Optimization method                           NLMINB
+##   Number of model parameters                         5
+##                                                       
+##                                                   Used       Total
+##   Number of observations                           239         240
+##                                                                   
+## Model Test User Model:
+##                                                       
+##   Test statistic                                 0.000
+##   Degrees of freedom                                 0
+## 
+## Model Test Baseline Model:
+## 
+##   Test statistic                                33.895
+##   Degrees of freedom                                 3
+##   P-value                                        0.000
+## 
+## User Model versus Baseline Model:
+## 
+##   Comparative Fit Index (CFI)                    1.000
+##   Tucker-Lewis Index (TLI)                       1.000
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)               -502.418
+##   Loglikelihood unrestricted model (H1)       -502.418
+##                                                       
+##   Akaike (AIC)                                1014.835
+##   Bayesian (BIC)                              1032.218
+##   Sample-size adjusted Bayesian (BIC)         1016.369
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.000
+##   90 Percent confidence interval - lower         0.000
+##   90 Percent confidence interval - upper         0.000
+##   P-value RMSEA &lt;= 0.05                             NA
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Standard errors                            Bootstrap
+##   Number of requested bootstrap draws             1000
+##   Number of successful bootstrap draws            1000
+## 
+## Regressions:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##   infi ~                                                                
+##     ln_porn    (c)    0.457    0.251    1.822    0.068    0.457    0.145
+##   commit ~                                                              
+##     ln_porn    (a)   -0.470    0.234   -2.004    0.045   -0.470   -0.142
+##   infi ~                                                                
+##     commit     (b)   -0.271    0.071   -3.824    0.000   -0.271   -0.285
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##    .infi              0.432    0.055    7.908    0.000    0.432    0.886
+##    .commit            0.531    0.050   10.539    0.000    0.531    0.980
+## 
+## R-Square:
+##                    Estimate
+##     infi              0.114
+##     commit            0.020
+## 
+## Defined Parameters:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+##     ab                0.127    0.071    1.798    0.072    0.127    0.040
+##     total             0.585    0.250    2.339    0.019    0.585    0.186</code></pre>
+<div class="sourceCode" id="cb122"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb122-1"><a href="path-analysis.html#cb122-1" aria-hidden="true" tabindex="-1"></a><span class="fu">parameterestimates</span>(med_fit<span class="fl">.2</span>)</span></code></pre></div>
+<pre><code>##       lhs op     rhs label    est    se      z pvalue ci.lower ci.upper
+## 1    infi  ~ ln_porn     c  0.457 0.251  1.822  0.068   -0.032    0.960
+## 2  commit  ~ ln_porn     a -0.470 0.234 -2.004  0.045   -0.917    0.019
+## 3    infi  ~  commit     b -0.271 0.071 -3.824  0.000   -0.404   -0.124
+## 4    infi ~~    infi        0.432 0.055  7.908  0.000    0.314    0.531
+## 5  commit ~~  commit        0.531 0.050 10.539  0.000    0.434    0.630
+## 6 ln_porn ~~ ln_porn        0.049 0.000     NA     NA    0.049    0.049
+## 7      ab :=     a*b    ab  0.127 0.071  1.798  0.072   -0.005    0.281
+## 8   total := c+(a*b) total  0.585 0.250  2.339  0.019    0.089    1.096</code></pre>
+<p>Cool, now we have a SE estimate of .071 instead of .064. Note also that the ci for the ab effect, that is, the indirect effect, ranges from -.005 to .28, we cross zero and can therefore not be certain in the existence of the mediation. The only robust effect is that of commitment on infidelity.</p>
+<p>Let´s finish of by fitting a normal linear interaction model and compare the outcomes.</p>
+<div class="sourceCode" id="cb124"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb124-1"><a href="path-analysis.html#cb124-1" aria-hidden="true" tabindex="-1"></a>lm_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(infi <span class="sc">~</span> consumption<span class="sc">*</span>commit, data)</span>
+<span id="cb124-2"><a href="path-analysis.html#cb124-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary.lm</span>(lm_model)</span></code></pre></div>
+<pre><code>## 
+## Call:
+## lm(formula = infi ~ consumption * commit, data = data)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.94415 -0.36188 -0.13989  0.00893  2.00893 
+## 
+## Coefficients:
+##                    Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)         1.53260    0.42566   3.601 0.000387 ***
+## consumption        -0.05829    0.19836  -0.294 0.769133    
+## commit             -0.33807    0.10103  -3.346 0.000954 ***
+## consumption:commit  0.04142    0.04864   0.852 0.395292    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.6591 on 235 degrees of freedom
+##   (1 observation deleted due to missingness)
+## Multiple R-squared:  0.1251, Adjusted R-squared:  0.1139 
+## F-statistic:  11.2 on 3 and 235 DF,  p-value: 6.744e-07</code></pre>
+<p>This output seems very nice to me. It very much confirms what our mediation analysis found. The only reliable effect is that of commitment.</p>
 
 </div>
 </div>

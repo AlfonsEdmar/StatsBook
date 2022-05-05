@@ -1,5 +1,496 @@
 # Path analysis
 
-## Multiple regression(again)
+## Streiner(2005)
+Path analysis is not really a type of analysis like OLS regression or logistic regression but rather a mode for communicating and fitting more complex models. The "path" in path analysis refers to the specification of relationships between variables. What the path describe can vary. For example, a regression analysis where Y is regressed on X we have a path between X and Y that describes a causal effect of X on Y. Note that it is us as researchers that make the call that the relationship is causal, just because X and Y correlate does not mean that either variable causes the other. If you recall the lavaan notations from way back in chapter 4 you should recognise the difference between fitting models in a "path context" versus a "regression context". To monkey what all the smart people say, OLS/ML regression is only a special case of a path analysis/SEM. Hopefully the distinction between path analysis and regression will become a bit fuzzy by the end of this chapter, they are very much the same. One might intuit them as slightly different tools for very similar jobs. In my opinion, the strength of path analysis lies in the visualisation opportunities combined with the ability to fit complex models, restrict those models and lastly compare the fit of those models. The little less cool thing with complex path analysis is that it is, well...complex. Another weakness of path analysis compared to "normal regression" is that it is very easy to fit nested regression models and there is a very natural progression of model building in the multiple regression context - as we saw in the previous chapter. Before getting in to "live" datasets, we can simulate some data. For this lecture I/we(class of 2021) were assigned an article by Streiner, it is a pretty nice article IMO so even if you haven’t read it I can recommend it. In the article Streiner analyses data from an unknown disorder called photonumerophobia, he describes it as the fear, that our fears of numbers will come to light. He then defines three predictors for this disorder, namely:
+HSM <- high school math grade
+ANX <- overall anxiety
+TAX <- the difference between predicted tax and actual tax (weird I know, but let’s run with it).
+Note that Streiner does not supply us with any data, he does however give as ample descriptives, enough to simulate the data quite closely, so let´s do that. All numbers are taken from table 1 in Streiner (2005): https://journals.sagepub.com/doi/pdf/10.1177/070674370505000207 
 
-## Mediation analysis 
+```{r}
+#This is a perfect time for some faux. A nice little function is the cormat_from_triangle calls. It is quite simple, if you write in the top right triangle of correlations the function fills out the missing bits in the matrix. Now you don’t have to write so much - thanks computer.
+library(faux)
+cors <- cormat_from_triangle(c(.509 , -.366  ,.346,
+                                      -.264  ,.338,
+                                              .260))
+#Now that we have the relationship between the data we can define the rest of the variables with the other descriptives given. 
+set.seed(4543) #setting seed is always good
+data <- rnorm_multi(  n = 200 #let's take 200 observations
+                    , vars = 4
+                    , mu   = c(26.79, 20.33, 74.69, 1983.23)
+                    , sd   = c(7.33 , 5.17 , 5.37 , 525.49)
+                    , r    = cors #this is our previously defined cor matrix
+                    , varnames = c('pnp', 'anx', 'hsm', 'tax')
+                    , empirical = T)#we want to perfectly reproduce the data
+
+
+#Let´s look at the correlation matrix for the data we just generated 
+cor(data)
+#It´s a thing of beauty is it not? What about the descriptives? 
+pastecs::stat.desc(data, desc = T ,basic = F)
+#Lovely. 
+
+```
+Now we have data that very much resembles that from the article we can fit the path models he describes. Let´s start with table 4. pnp is regressed on all variables and the predictors are allowed to correlate. We will use the package lavaan for this so if you need a refresher go back to chapter 4 and check out the links provided there. 
+```{r message=FALSE}
+#Loading lavaan and semPlot
+library(lavaan)
+library(semPlot)
+#Specifying our model with the lavaan syntax
+model.1 <- ('
+            #regressions
+            pnp ~ tax + hsm + anx
+            
+            #correlations
+            anx ~~ hsm
+            anx ~~ tax
+            tax ~~ hsm
+            
+            ')
+#Fitting our model using the sem function
+fit.1 <- sem(model = model.1, data = data)
+#The warning here is due to the fact that the tax variable is much larger than the others. Let´s plot the model. 
+semPaths(  object = fit.1
+         , what = 'est, std'
+         , style = 'lisrel'
+         , curvePivot = TRUE
+         , edge.label.cex = 1.5
+         , rotation = 2
+         , sizeMan = 10)
+
+#And there it is, pretty as a picture. 
+```
+Now, Streiner actually specifies two other models, those seen in figure 5. Let's create and plot those two. After that we can check how they fit. 
+
+```{r}
+#let’s start with model a
+model.a <- ('
+            #regressions
+            pnp ~ tax
+            tax ~ hsm
+            hsm ~ anx
+            ')
+#Fitting the model
+fit.a <- sem(model = model.a, data = data)
+#Ploting the model
+semPaths(  object = fit.a
+         , what = 'est, std'
+         , layout = 'spring'
+         , style = 'lisrel'
+         , curvePivot = T
+         , edge.label.cex = 1.5
+         , rotation = 1
+         , residuals = T
+         , sizeMan = 10)
+#The control you have over the layout of these plots are vast, but the require tinkering that is not often worth it. This looks good enough. Let´s do the next model. 
+
+model.b <- ('
+            #regressions
+            pnp ~ tax + hsm
+            tax ~ anx
+            hsm ~ anx
+            ')
+#Fitting the model
+fit.b <- sem(model = model.b, data = data)
+#Ploting the model
+semPaths(  object = fit.b
+         , what = 'est, std'
+         , layout = 'tree2'
+         , style = 'lisrel'
+         , curvePivot = T
+         , edge.label.cex = 1.5
+         , rotation = 2
+         , residuals = T
+         , sizeMan = 10)
+
+```
+Cool, this is the exact models he fits. Now, are these models any good? we can explore that question by summarising the fits (fit.1, fit.a and fit.b), but first, how many parameters can we estimate? This is one of the trickier parts of path analysis and SEM. We cannot simply think about the number of variables we have; we must think about our data in terms of a variance/co-variance matrix. For each variable we have one variance, in this case 4, each variable pair has a covariation, thus we have ([k^2 – k] / 2) covariances where k is the number of variables we have. Let´s calculate how many "pieces of information we have'
+
+```{r}
+k  <- 4
+co <- ((k^2-k)/2)
+#We have 4 variances and 6 covariances, this totals out at 10. This means that we can make a total 10 parameter estimates before we exhaust our degrees of freedom. Read the article more closely for a better understanding of degrees of freedom, they are fascinating.  
+```
+So, how many parameters are we estimating? in the first model(fit.1) we are actually estimating 10 parameters (three regressions, tree covariations, and 4 variances). This means that we have 0 degrees of freedom and a "perfect fit". In second model(fit.a) we estimate 6 parameters(three regressions and tree variances) and in the last model(fit.b) we estimate 7 parameters(4 regressions and 3 variances). This can be tricky to wrap your mind around in the beginning but once you play around with it a bit it becomes more straight forward. Since we have two overidentified models we can compare the fit of them(the identified model fits perfectly), we can do this with the anova function. 
+
+```{r}
+anova(fit.a, fit.b)
+#note that this if not an F test but a chi-squared test(LRT)
+```
+The significance of the test indicates that model.b fits significantly better than model.a. However, the information difference in terms of AIC and BIC is very small. But this is an issue that doesn't really apply itself well to entirely imaginary data. We don´t really have a good frame of reference in terms of theory.
+
+## workshop analysis
+Now that we have gotten familiar with path analysis, we can try out another example. The data is still very much simulated, but this time we have to deal with some actual data points, not just generation by ourselves. The following analysis is based of the workshop on path analysis at GU. Hopefully i can take the data from the workshop without any issues. Let´s load the data (it should be available on the repository, hopefully.)
+
+
+```{r}
+library(haven)
+data <- read_sav("data path analysis spring 22.sav")
+#Note. this is my path to the data and to access the file you need to import it yourself
+```
+These are the main packages we will be using. We have the usual suspects + MVN for analysis of multivariate normality. 
+
+```{r}
+library(tidyverse)
+library(lavaan)
+library(semPlot)
+library(MVN)
+```
+
+Let´s take a peek at what we are working with.
+
+```{r}
+summary(data)
+```
+
+All variables are numeric and seems to range between 0 and 5. Note that some variables are ordinal, that is, they are whole numbers that are not continuous, that is, the distance between 1 and 2 cannot be assumed to be the same as between 3 and 4. If we want to assume this, the data needs to normally distributed. So let´s take a look at the distributions. Note however that this is NOT the normality assumption of the linear regression but rather an assumption of using ordinal data as if they were continuous.
+
+```{r}
+ggplot(data, aes(stress))+
+  geom_histogram(colour = 'blue')+
+  theme_bw()
+
+#It has a normal look, and it seems to be continuous measure, this is good.
+
+ggplot(data, aes(satisfaction))+
+  geom_histogram(colour = 'blue')+
+  theme_bw()
+
+#Again, quite normal looking - this is ordinal but could be treated as if continuous with some mental gymnastics
+
+ggplot(data, aes(turnover_intent))+
+  geom_histogram(colour = 'blue')+
+  theme_bw()
+
+#Interesting, perhaps its measured in half steps? but that begs the question why none of the higher valus such as 4.5 exists, it seems to stop after 2. Strange.
+
+ggplot(data, aes(demands))+
+  geom_histogram(colour = 'blue')+
+  theme_bw()
+
+#Like satisfaction, looks pretty good. 
+
+ggplot(data, aes(support))+
+  geom_histogram(colour = 'blue')+
+  theme_bw()
+
+#Now this is a strange looking distribution...it looks to be a continuous measure and the density of the curve should be quite normal.
+
+#However, we need to check the normality of our predicted variables when we have them. Before that we can check the normality tests. One common measure is mardia, so let´s use that. We can also look at some of the qq-plots and the outlier measures. Let´s save the scores in a list called normality_diagnostics
+
+normality_diagnostics <- mvn(data
+    , mvnTest = 'mardia' #takes maridas test
+    , multivariatePlot = 'qq' #normal chi2 qq-plot
+    , univariateTest = 'AD' #anderson-darling test for univariate normality
+    , showOutliers = TRUE 
+    , showNewData = TRUE #stores a tibble without the outliers
+    , multivariateOutlierMethod = 'adj') #takes the adjusted mahalanobis distance
+
+#Checking the normality descriptives
+normality_diagnostics$Descriptives
+
+#Checking univariate normality 
+normality_diagnostics$univariateNormality
+
+#Checking multivariate normality
+normality_diagnostics$multivariateNormality
+```
+So, nothing is normal and we have quite a few outliers according to Mahalanobis. If we want an outlier free data set the mvn function saves it for us. Let´s try to extract the clean data from the normality diagnostics.
+
+```{r}
+clean_data <- normality_diagnostics$newData
+```
+
+Here we have the data without the 27 outliers indicated by the normality diagnostics. I´m not a fan of this type of diagnostics, but we can use the raw data as a type of sensitivity analysis later on, for now let’s move on using the clean data.
+
+Since we don´t really know what we are doing it´s always good to look at the correlations to inform us about what connections lie within our sample. So let´s do that and then try to find a good model for our data.
+
+```{r}
+#This gives a normal correlation matrix
+cor(clean_data)
+
+#we can however plot the data out using the corplot function from the psych package without loading it by using the :: command like so: 
+psych::corPlot(cor(clean_data))
+#Note. the omitted variable in the bottom is turnover_intent
+```
+Stress, support and satisfaction seems to be correlated just fine. Demands seem to be a quite superfluous variable having low correlations to all other variables. So let´s build a model where stress and support are allowed to correlate and that both have a causal impact on the satisfaction you have in the workplace. Let´s also say that support and satisfaction have a causal impact on your turnover intent. Let´s specify this model using the lavaan syntax.
+
+```{r}
+model.1 <- ('
+             #regressions
+             satisfaction    ~ stress + support
+             turnover_intent ~ satisfaction 
+             turnover_intent ~ support
+  
+             #covariates 
+             stress ~~ support
+            ')
+```
+
+Now that we have our model - specified in text - we can fit that model using lavaans sem function just like we did before.
+
+```{r}
+fit.1 <- sem(  model = model.1   #the model we want to fit
+             , data = clean_data #the data we want to fit the model on
+             , estimator = 'MLM' #the estimator we use (robust maximum likelihood)
+)
+```
+
+Now that we have our fit, we can summarise the results
+
+```{r}
+summary(fit.1                  #the fit we want to summarize 
+        , standardize  = TRUE  #we want the standardised estimates
+        , fit.measures = TRUE  #we also want the fit measures(CFI, TLI)
+        , rsquare      = TRUE  #if we want to r2 for the model 
+)
+```
+So our model fits remarkably well. Not even the chi2 is significant. Also, not how much better our model is than the baseline model. One bad thing is the fact that we are not very courageous, we only have one degree of freedom. Let´s plot this model out using semPlot and then try improving our fit even more.
+
+```{r}
+#This is a more detailed notation of the semPlot alternatives
+semPaths( object = fit.1       #the fit we want to plot(our model)
+         , what  = 'est, std'  #what we want to plot(the z-coefficients)
+         , style = 'lisrel'    #the style of the plot
+         , curvePivot = TRUE   #manipulates how the lines look
+         , esize = 4           #the size of our lines
+         , nCharNodes = 0      #takes all the characters in our manifest vars
+         , edge.label.cex = 1.5#how big the estimates are(indicated in "what =")
+         , residuals = FALSE   #removes the residual loops
+         , sizeMan = 15         #indicates the width of manifest variables
+         , rotation = 2        #how we want to rotate the plot(wich direction)
+         , theme = 'Borkulo')  #the theme we want to use, i like this one
+
+#Looks pretty good right? but notice the very weak trace between support and turnover intent and satisfaction! 
+```
+
+Let´s interpret this. We can see that the correlation between support and stress is -.36 (as we saw in the correlation plot). We can also see that for every unit increase in stress satisfaction decreased with .43 standard deviations. We also see that for every unit increase in satisfaction we see a decrease in turnover_intent at .58 standard deviations. All these estimates, together with the unstandardized counterparts are available in the summary above. In the summary we also see an r2 of .26 in satisfaction and .35 in turnover intent, meaning that we can explain roughly 26% of the variation in satisfaction through stress and support and .35% of the variation in turnover intent through support and satisfaction. Pretty neat right?
+
+So where do we go from here? we have a model and its fits the data very well. We want to be brave scientists though, so we should refine our model and make some bolder claims. For example, let´s make the claim that support does NOT influence turnover intent, support does not even influence satisfaction. No, support actually has a one directional relationship with stress, that is the degree of support we have impacts our degree of stress, but stress does not influence how much support we have. Let´s specify this model and fit it.
+
+```{r}
+model.2 <- ('
+            #regressions
+            stress ~ support
+            satisfaction ~ stress
+            turnover_intent ~ satisfaction
+            ')
+
+fit.2 <- sem(  model = model.2  
+             , data  = clean_data 
+             , estimator = 'MLM')
+
+summary(fit.2                  
+        , standardize  = TRUE  
+        , fit.measures = TRUE 
+        , rsquare      = TRUE  
+)
+```
+
+By looking at the fit measures we can see that this model fits very well. But notice that we now have 3 degrees of freedom, that is, by further constraining the model (not allowing correlations between stress and support and removing the regression between support and turnover intent) we have expressed a more theoretically parsimonious model - very cool. Let´s make the path diagram and interpret the coefficients.
+
+```{r}
+semPaths( object = fit.2       
+         , what  = 'est, std' 
+         , style = 'lisrel'   
+         , curvePivot = TRUE   
+         , esize = 10   
+         , asize = 5    #arrowhead size
+         , sizeMan2 = 3 #height of the manifest variables
+         , nCharNodes = 0      
+         , edge.label.cex = 1.5
+         , residuals = FALSE  
+         , sizeMan = 15   
+         , rotation = 2
+         , theme = 'Borkulo')
+
+#Note. The new comments are just arguments we didn´t use in the previous plot
+```
+
+Cool, notice how we rephrased the connection between support and stress to a one-sided arrow. This can now be interpreted as a regression weight, that is, for every unit increase in support we se a .36 unit decrease in stress. We also see a bigger coefficient for the relationship between stress and satisfaction. This is likely due to the fact that we presume that support does not impact satisfaction but influences stress and thus, some of the variation we can explain in stress by support also influences satisfaction - i.e., stress mediates the relationship between support and satisfaction. The relationship between satisfaction and turnover intent is also different, but only by .01, that is, super small and an unimportant difference.
+
+Now that we have two overidentified models we can compare the fit of them. This is surprisingly easy; we only use the anova function and our to model fits. Note that this is not a GLM anova but an LRT test, that is, a likelihood ratio test.
+
+```{r}
+anova(fit.1, fit.2)
+```
+
+So what does this tell us? It tells us that the baseline model(fit.1) fits the data significantly better then the other model(fit.2). However, one should not that the AIC and BIC is lower for the fit.2 model, low scores on AIC and BIC is indicative of good fit, and models with low values are preferable to those with higher BIC and AIC. I do not feel particularly strongly about any of these models, but if I had to choose one I would choose the second one since I like parsimony, but the first model technically fits better (though its almost identified so do with that what you will). For more on the LRT you can see: http://econ.upf.edu/~satorra/dades/BryantSatorraPaperInPressSEM.pdf
+
+One last thing we can do before we move on to other things is the check the modification indices. This is one cool thing that you can do with a path analysis that normal regression can´t really do. We will not use them for anything, but it is interesting to look at them.
+
+```{r}
+modificationindices(fit.2) %>% arrange(-mi) %>% head(20)
+#Note. the %>% is a pipe function, they make code simpler to write so look into them! See the provided programming resources in the beginning of the book. 
+```
+The modification indices (mi column) shows how much the chi2 of the model would drop if the parameter was included. Thus, indices over 3.84 will significantly increase the fit of the model. We have a few modifications we can make to our model, some of which improves the fit quite a bit.
+
+Lastly, let´s do a sensitivity check by running the second model through the raw data. That is, the data with the outliers included.
+
+```{r}
+sensitivity.fit <- sem(  model = model.2  
+                       , data  = data 
+                       , estimator = 'MLM')
+
+summary(sensitivity.fit, standardize  = TRUE, fit.measures = TRUE , rsquare = TRUE)
+anova(sensitivity.fit, fit.2)
+#Note. We are comparing two models with the same degrees of freedom, this is not very appropriate since they are not nested (and on different data) but it’s nice to see the measures anyways.
+```
+So, the model based on the raw data is not that different from we get when we have cleaned the data. This becomes even more apparent if we were to check the parameter estimates for the two models like so:
+```{r}
+parameterestimates(fit.2)
+parameterestimates(sensitivity.fit)
+```
+They are pretty much the same parameter estimates, certainly not significantly different. So, what more can we do for this fun little analysis? we can do some bootstrapping. Lavaan has a really nice bootstrapping function that gives a lot of freedom to choose what to do with the estimates. Let´s bootstrap all estimates from the second model(fit.2) and take a percentile intervall for them. Note that this can take a few seconds.
+```{r}
+boot_sample <- bootstrapLavaan( object = fit.2 #the fit we want to sample
+                               , R     = 1000  #the number of iterations we want
+)
+```
+Notice that “boot_sample” is a matrix of many estimates. Let´s put the regression coefficients in a dataframe and make our intervals.
+```{r}
+boot_sample <- data.frame(boot_sample)
+boot_coef   <- select(boot_sample  #the data we want to take variables/cols from
+                      , c(1,2,3,)) #a list of the cols we want to take(1,2,3)
+
+quantile(boot_coef$stress.support     #the estimate we want to take intervals on
+         , probs = c(.025, .5, .975)) #the percentile points we want to see
+#We see that the regression weight ranges between -.55 and -.24
+
+quantile(boot_coef$satisfaction.stress     
+         , probs = c(.025, .5, .975))
+#We see that the regression weight ranges between -.98 and -.55
+
+quantile(boot_coef$turnover_intent.satisfaction     
+         , probs = c(.025, .5, .975))
+#We see that the regression weight ranges between -.77 and -.59
+```
+This is not super interesting, but it is pretty cool and also kind of illustrates what you can do with bootstrapping in a more manual way. There are of course much more you can do than to take percentile intervals of the regression weights but that lies beyond the specific realm of path analysis.
+
+## Multiple regression(again)
+By now you should feel good, both with lavaan semPlot and the general procedure for path analysis. So, let's take a step back and rework the good ´ol Field example for multiple regression, but with a path analysis. And don´t worry, this will be short and sweet :)
+
+## Mediation analysis
+In the Field book he gives an example of mediation with the data set from Lambert et al.,(2012). Since we are very comfortable with working with paths, mediation becomes a simple thing. In the regression example in the previous chapter we only estimated direct effects, that is, effects of a on c (or x on y if you prefer those letters). Mediation can estimate both direct and indirect effects. The indirect effect is the multiplication of path a and path b. Let´s load the data. While the process of a moderation analysis is quite complicated in terms of functions and packages - as we saw in the regression part of the book, with mediation we can rely on good ´ol lavaan. 
+
+```{r packages - mediation, message=FALSE, warning=FALSE}
+#Packages we need
+
+library(lavaan)
+library(semPlot)
+```
+
+
+```{r}
+#Loading the data
+data <- read_sav("Lambert et al. (2012).sav")
+names(data) <- c('consumption', 'ln_porn', 'commit', 'infi', 'hook_ups')
+```
+
+Let´s specify the model from the Field book. 
+```{r}
+
+med_model.1 <- (' 
+# Direct effect
+infi ~ c*consumption
+               
+# Mediator
+commit ~   a*consumption
+infi   ~   b*commit
+
+# Indirect effect (a*b)
+ab := a*b
+
+# Total effect
+total := c + (a*b)
+         ')
+
+#Note. The defined variables a, b and c are needed for the mediation analysis to work. These are the paths of our model, without them we cannot calculate our main and indirect effects! the lavaan symbol ':=' describes a new parameter dependent on our specified model. In this case it´s the regression weights (I believe)
+
+```
+Let´s fit and summarise the result of this model. 
+```{r}
+med_fit.1 <- sem(med_model.1, data)
+#Summarising a lavaan can take a lot of commands, I will note what they do here as I have done before, but note that there are many other alternatives you can use! 
+summary(med_fit.1            #the model we want to use(med_fit.1)
+        , standardize =  T   #do we want a standardized estimate? T mean true/yes
+        , fit.measures = T   #do we want fit measures? 
+        , rsquare = T)       #do we want r2
+```
+Nice, this is exactly what we want. Notice also that our model is saturated/identified, that is, it has 0 degrees of freedom. This means that we can´t really assess the fit of this model.
+Let´s make a quick interpretation. Infidelity increases with .107 units for every unit increase in consumption. Commitment decreases by .092 units for every increase in consumption and infidelity decreases with .268 for every unit increase in commitment. ´ab´ is our indirect effect, that is, .025. Which can be interpreted as a kind of r2.  
+
+
+```{r}
+semPaths(med_fit.1
+         , what = 'est, std'
+         , style = 'lisrel'
+         , layout = 'tree'
+         , nCharNodes = 0
+         , edge.label.cex = 1.5
+         , sizeMan = 20
+         , residuals = F
+         , rotation = 4
+         , theme = 'Borkulo')
+#Note that this is NOT the same output as in the field book. He uses the log transformed variable for consumption. So let´s recreate his model.
+```
+
+
+
+```{r}
+med_model.2 <- (' 
+# direct effect
+infi ~ c*ln_porn
+               
+# mediator
+commit ~   a*ln_porn
+infi   ~   b*commit
+
+# indirect effect (a*b)
+ab := a*b
+
+# total effect
+total := c + (a*b)
+         ')
+
+med_fit.2 <- sem(med_model.2, data)
+summary(med_fit.2, standardize = T, fit.measures = T, rsquare = T)
+
+semPaths(med_fit.2
+         , what = 'est'
+         , style = 'lisrel'
+         , layout = 'tree'
+         , nCharNodes = 0
+         , edge.label.cex = 1.5
+         , sizeMan = 20
+         , residuals = F
+         , theme = 'Borkulo'
+         , rotation = 4)
+
+#Very nice, we have recreated the findings from Field. 
+```
+
+These are the same models, but with the log transformation. The reason why I didn´t use that in the first model is because it´s harder to interpret. I have a hard time understanding what this indirect effect of .127 means since it’s a combination of the influence of a log variable, through a variable that is not logged. A smarter person than I will have to describe what this means. 
+
+Field also uses bootstrapped standard errors; this can be specified in the fit portion of our workflow. Let´s refit our second model but with bootstrapped SEs. 
+
+```{r}
+#it´s going to take a few seconds so do not fret if you don’t get an output 
+
+set.seed(234) #setting seed so that we can recreate the random values
+
+med_fit.2 <- sem(med_model.2        #what model we want to fit 
+                 , se = 'bootstrap' #how do we want to estimate the std.err?
+                 , data)            #indicates the data we want to fit the model on. 
+summary(med_fit.2, standardize = T, fit.measures = T, rsquare = T)
+parameterestimates(med_fit.2)
+
+```
+Cool, now we have a SE estimate of .071 instead of .064. Note also that the ci for the ab effect, that is, the indirect effect, ranges from -.005 to .28, we cross zero and can therefore not be certain in the existence of the mediation. The only robust effect is that of commitment on infidelity. 
+
+Let´s finish of by fitting a normal linear interaction model and compare the outcomes. 
+```{r}
+lm_model <- lm(infi ~ consumption*commit, data)
+summary.lm(lm_model)
+```
+This output seems very nice to me. It very much confirms what our mediation analysis found. The only reliable effect is that of commitment.
