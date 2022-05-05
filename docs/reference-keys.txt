@@ -8,11 +8,9 @@ basic-programming
 organisation
 rmarkdowm
 what-i-expect-you-to-know
-what-i-expect-you-to-know-1
 descriptive-statistics
 basic-null-hypothesis-testing
 statistical-phenomena
-a-brief-introduction-to-r-programming
 useful-packages-and-functions-that-helped-me-learn
 tidyverse
 distribution-functions---rnorm-dbeta-rbinom-etc
