@@ -2,11 +2,14 @@ table-of-contents
 introduction
 foreword
 some-useful-resources
+<<<<<<< HEAD
 welcome-to-r
 the-r-environment
 basic-programming
 organisation
 rmarkdowm
+=======
+>>>>>>> 6e602ff94c16ccfadaf3dbc8e9ae607a5778f05a
 what-i-expect-you-to-know
 descriptive-statistics
 basic-null-hypothesis-testing
