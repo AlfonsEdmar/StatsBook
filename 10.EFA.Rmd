@@ -1,1 +1,293 @@
 # Exploratory factor analysis (EFA)
+
+In this section we will take a look at a very large sample from a cross-language
+hexaco-100 study. The aim is to see if the scale works on all languages. And to
+fit a theoretically good model. For the full study see: https://www.researchgate.net/publication/332130706_The_HEXACO-100_across_16_languages_A_large-scale_test_of_measurement_invariance we won’t be able to use the full scale (not enough power in the computer), but we can try some cool stuff.
+
+We will be using this data for both the EFA and the CFA later on. 
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(here)
+hexaco_100 <- read_excel(here("Data sets/hexaco.100.xlsx"))
+View(hexaco_100)
+```
+
+This data set can be found at: https://osf.io/bwtnr/ or at the book repo. Below we have a brief description of the variables. 
+Variable Description
+lang <- Language version of HEXACO-100 
+2 = "Chinese", 3 = "Croatian", 
+4 ="Czech", 5 = "Dutch", 
+6 = "German", 8 = "Italian"
+9 = "Japanese", 10 = "Korean"
+11 = "Polish", 13 = "Serbian"
+14 = "Spanish", 15 = "Swedish",
+16 = "Turkish")
+
+
+hex1 - hex100 <- Items of the HEXACO-100; 1 = strongly disagree to 5 = strongly agree(inverted items are already re-coded); for assignment of items to HEXACO factors, see www.hexaco.org)
+
+hh <- Mean value of Honesty-Humility
+hex:6, 30, 54, 78, 12, 36, 60, 84, 18, 42, 66, 90, 24, 48, 72, 96
+
+em <- Mean value of Emotionality
+hex:5, 29, 53, 77, 11, 35, 59, 83, 17, 41, 65, 89, 23, 47, 71, 95
+
+ex <- Mean value of Extraversion
+hex:4, 28, 52, 76, 10, 34, 58, 82, 16, 40, 64, 88, 22, 46, 70, 94
+
+ag <- Mean value of Agreeableness
+hex:3, 27, 51, 75, 9, 33, 57, 81, 15, 39, 63, 87, 21, 45, 69, 93
+
+co <- Mean value of Conscientiousness
+hex:2, 26, 50, 74, 8, 32, 56, 80, 14, 38, 62, 86, 20, 44, 68, 92
+
+op <- Mean value of Openness to Experience
+hex:1, 25, 49, 73, 7, 31, 55, 79, 13, 37, 61, 85, 19, 43, 67, 91
+
+hh_sinc <- Mean value of sincerity facet of Honesty-Humility 6, 30, 54, 78
+
+hh_fair <- Mean value of fairness facet of Honesty-Humility 12, 36, 60, 84
+
+hh_gree <- Mean value of greed-avoidance facet of Honesty-Humility 18, 42, 66, 90
+
+hh_mode <- Mean value of modesty facet of Honesty-Humility 24, 48, 72, 96
+
+em_fear <- Mean value of fearfulness facet of Emotionality 5, 29, 53, 77
+
+em_anxi <- Mean value of anxiety facet of Emotionality 11, 35, 59, 83
+
+em_depe <- Mean value of dependence facet of Emotionality 17, 41, 65, 89
+
+em_sent <- Mean value of sentimentality facet of Emotionality 23, 47, 71, 95
+
+ex_sses <- Mean value of social self-esteem facet of Extraversion 4, 28, 52, 76
+
+ex_socb <- Mean value of social boldness facet of Extraversion 10, 34, 58, 82
+
+ex_soci <- Mean value of sociability facet of Extraversion 16, 40, 64, 88
+
+ex_live <- Mean value of liveliness facet of Extraversion 22, 46, 70, 94
+
+ag_forg <- Mean value of forgiveness facet of Agreeableness 3, 27, 51, 7
+
+ag_gent <- Mean value of gentleness facet of Agreeableness 9, 33, 57, 81
+
+ag_flex <- Mean value of flexibility facet of Agreeableness 15, 39, 63, 87
+
+ag_pati <- Mean value of patience facet of Agreeableness 21, 45, 69, 93
+
+co_orga <- Mean value of organization facet of Conscientiousness 2, 26, 50, 74
+
+co_dili <- Mean value of diligence facet of Conscientiousness 8, 32, 56, 80
+
+co_perf <- Mean value of perfectionism facet of Conscientiousness 14, 38, 62, 86
+
+co_prud <- Mean value of prudence facet of Conscientiousness 20, 44, 68, 92
+
+op_aesa <- Mean value of aesthetic appreciation facet of Openness to Experience 1, 25, 49, 73
+
+op_inqu <- Mean value of inquisitiveness facet of Openness to Experience 7, 31, 55, 79
+
+op_crea <- Mean value of creativity facet of Openness to Experience 13, 37, 61, 85
+
+op_unco <- Mean value of unconventionality facet of Openness to Experience 19, 43, 67, 91
+
+altruism <- Mean value of altruism facet 97, 98, 99, 100
+
+So, we have a lot of variables. Since we are using the data set more than once, we should split the sample so that we can use one half on the EFA and one for the CFA. Let´s do that now. 
+
+```{r}
+#Our random grouping variable
+set.seed(324)
+grouping <- rbinom(n = 25914,size = 1, prob = .5)
+
+efa_data <- hexaco_100 %>%
+  filter(grouping == 1)
+
+cfa_data <- hexaco_100 %>%
+  filter(grouping == 0)
+
+```
+This dataset is still too big for us to use in an efficient manner. I will look at one factor in the data, conscientiousness, and examine how well we can capture the facets. Let´s make a data set with conscientiousness from our efa split. This data set will still be very very large, so let´s take a random sample of 1000 from the c data. 
+```{r}
+
+c_efa_data <- efa_data %>% dplyr::select(hex2, hex26, hex50, hex74, hex8, hex32, hex56, hex80, hex14, hex38, hex62, hex86, hex20, hex44, hex68, hex92)
+c_efa_data <- slice_sample(c_efa_data, n = 1000, replace = F)
+
+```
+
+
+Now that we have our data, we should look at the descriptive statistics of the variables. My favourite way, as you might know by now, is to use the mvn function. 
+
+```{r}
+library(MVN)
+normality_diagnostics <- mvn(c_efa_data
+    , mvnTest = 'mardia'
+    , multivariatePlot = 'qq' 
+    , univariateTest = 'AD'
+    , showOutliers = TRUE 
+    , showNewData = TRUE 
+    , multivariateOutlierMethod = 'adj')
+```
+
+
+Let’s check out the descriptive statistics from our diagnostics. One of the reasons I like the mvn function is that it stores a lot of useful information that we can access at any point later on. 
+```{r}
+normality_diagnostics$Descriptives
+```
+Seems very reasonable, no big skew or kurtosis. The mean and median are good as well
+
+We can also take a look at the univariate normality. 
+```{r}
+normality_diagnostics$univariateNormality
+```
+Unsurprisingly, not normal. But remember that all these tests are sensitive. Let´s check the multivariate normality as well
+```{r}
+normality_diagnostics$multivariateNormality
+```
+Right, does not look super good. But we should not rely too much on these tests. What we should do however, is use robust measures. 
+
+```{r}
+
+ggplot(c_efa_data)+
+  geom_density(aes(hex2))+
+  geom_density(aes(hex26))+
+  geom_density(aes(hex50))+
+  geom_density(aes(hex74))+
+  geom_density(aes(hex8))+
+  geom_density(aes(hex32))+
+  geom_density(aes(hex56))+
+  geom_density(aes(hex80))+
+  geom_density(aes(hex14))+
+  geom_density(aes(hex38))+
+  geom_density(aes(hex62))+
+  geom_density(aes(hex86))+
+  geom_density(aes(hex20))+
+  geom_density(aes(hex44))+
+  geom_density(aes(hex68))+
+  geom_density(aes(hex92))+
+  theme_bw()
+
+#Doesnt look that bad to me
+```
+
+For comfort, let´s use the clean data identified by the multivariate test. I don´t like doing this, but we can use the raw data for reference later. 
+
+```{r}
+clean_efa_data <- normality_diagnostics$newData
+```
+Let´s use the clean data and get into the EFA. These are the packages that we will need. 
+```{r message=FALSE}
+library(GPArotation)
+library(corpcor)
+library(paran)
+library(EFAtools)
+```
+
+First thing to do is to check if our sample is adequate. We use the EFAtools package functions bartlett and KMO for that. We should also have a look at the correlation matrix. 
+```{r}
+#This is our correlation matrix
+efa_cormat <- cor(clean_efa_data)
+efa_cormat
+```
+Most correlations are very small, we should not expect too much from this. Let´s check the KMO and bartlett´s test to see where we are at. 
+```{r}
+BARTLETT(clean_efa_data)
+KMO(clean_efa_data)
+
+```
+Nice, we should be good to go with our factor extraction, but first lets also look at the determinant. 
+```{r}
+det(efa_cormat)
+```
+Good, it´s not negative and its quite big. Certainly bigger than the "cut-off" at <.00001. We are good to go, let´s check the scree plot to see where the eigen values drop off and then perform a parallel analysis to get an estimate of how many factors we should extract. 
+
+```{r}
+SCREE(efa_cormat)
+```
+Most of the variance is captured by extracting one factor it seems. Let´s performe the parallel analysis to confirm this. 
+
+```{r}
+paran(efa_cormat, iterations = 5000, centile = 0, quietly = FALSE, 
+      status = TRUE, all = TRUE, cfa = TRUE, graph = TRUE, color = TRUE, 
+      col = c("black", "red", "blue"), lty = c(1, 2, 3), lwd = 1, legend = TRUE, 
+      file = "", width = 640, height = 640, grdevice = "png", seed = 0)
+```
+Looks like it is as we feared. We don´t really have a factor structure to latch on to. But let’s conduct our EFA and see what the pattern matrices look like. We start by fitting our efa model. Theoretically, we should extract 4 factors, so let’s do that and call the model efa.4. 
+
+```{r}
+
+efa.4<- EFA(  x = efa_cormat       #the correlation matrix
+            , N = 839              #number of obs
+            , n_factors = 4        #number of factors
+            , method = 'ML'        #method of estimation
+            , rotation = 'oblimin')#method of rotation
+```
+Before looking at the model output, let’s check the communalities of our items resulting from this model. That is, how much variance is accounted for in each item from the 4 factor model fitted.
+```{r}
+#There are different measures of communalities, the efa function takes 2, one called h2_init and one called h2. h2 is the final communality estimate from the unrotated solution and h2_init is the initial communality estimate from a PAF. I will use h2, since I did not use PAF, but it might be useful to look into how different measures of communalities will affect the variance estimates of your model.
+efa.4$h2
+```
+In general we can account for a reasonable amount of variance in our items, with the exception of hex68. Let´s keep this in mind for when we look at the main model output. To get a look at this output simply call the fitted model like so:
+```{r}
+efa.4
+```
+
+
+This looks pretty good in my opinion. We have a factor structure that resembles what could be theoretically expected as well as what the unadjusted eigen values of the parallel analysis suggested IF we use kaiser extraction, that is, extracting factors that have an eigen value of 1 or more(note, factor 4 does not have an eigen value of 1 but slightly lower though the point of inflection seem to be at 4 factors - see the graphs above). 
+
+The factor correlation table indicates the correlation between the factors, some are quite correlated such as factor 2 and 1 with r = -.44. Looking at the explained variance table we can see that we explain roughly 37% of the variation of out items using this model. And the model fit measures are very nice with a low RMSEA and a high CFI. Note that the fit measures are only available when using maximum likelihood estimation. If you are using a non ML estimation another way of assessing the fit or if we extracted the "right" number of factors is to look at the difference between the model correlations (reproduced correlations) and the correlations in the raw data. That is, check the sum of the residuals.
+
+Residuals can be extracted using the "factor.residuals" function from the psych package. You just enter the original correlation matrix and the rotated loadings from your model (I believe)
+```{r}
+resid <- psych::factor.residuals(r = efa.4$orig_R,       #our original R matrix
+                                 f = efa.4$rot_loadings) #our rotated loadings
+```
+Now that we have our residuals, we can do more or less whatever we wish to do with them. Note that the object resid is a 16x16 matrix. They can be tricky to work with, so we can instead put the upper triangle of the matrix in a column - essentially a list of the residuals. I will only check the distribution of them with a simple histogram, but residuals are good to have for many things. We can do this like so:
+```{r}
+resid <- as.matrix(resid[upper.tri(resid)])
+hist(resid)
+#Looks very nice if you ask me, some residuals are quite big though considering we are working with correlatoins. 
+```
+
+
+The issues with this model are the crossloadings and the small loading on hex68 - which we expected due to the low communality. So where do we go from here? In a full analysis we should try out different models and compare them to each other. And then follow upp these models by testing their reliability. Reliability can be measured in many ways. I prefer using a split sample to see if the results are replicated. This should be done for all models of interest in order to examine whether or not they are reliable. For an introduction to this I recommend reading "Osborne, J. W., & Fitzpatrick, D. C. (2012). Replication analysis in exploratory factor analysis: What it is and: Why it makes your analysis better. Practical Assessment, Research and Evaluation, 17(15), 1–8." The most barebones way of examining this is with some sort of intercorrelation measure such as cronbachs alpha. I will show a way of doing this eventhough I personally do not think these measures are very convincing in terms of reliabuility.
+
+We start by creating dataframes with the items corresponding to each factor.
+```{r}
+factor1 <- data.frame(clean_efa_data$hex8, 
+                      clean_efa_data$hex32, 
+                      clean_efa_data$hex56, 
+                      clean_efa_data$hex80)
+
+factor2 <- data.frame(clean_efa_data$hex20, 
+                      clean_efa_data$hex44, 
+                      clean_efa_data$hex92)
+
+factor3 <- data.frame(clean_efa_data$hex2, 
+                      clean_efa_data$hex26, 
+                      clean_efa_data$hex50, 
+                      clean_efa_data$hex74)
+
+factor4 <- data.frame(clean_efa_data$hex14, 
+                      clean_efa_data$hex38, 
+                      clean_efa_data$hex62, 
+                      clean_efa_data$hex86)
+
+```
+
+These dataframes can be usefull for many things, but lets check the cronbachs alpha of the factors. 
+```{r}
+psych::alpha(factor1)
+psych::alpha(factor2)
+psych::alpha(factor3)
+psych::alpha(factor4)
+```
+Nice, we have our alpha measures. They are a bit low, but hey, that´s the name of the facet game. 
+
+This is basically all there is to the EFA in terms of procedure. The point is to reduce the items to latent variables/factors - which is something that we have done. What to do next depends on your research question - do you want to use participants scores to predict something? maybe you just want to examine the reliability. An overly long look into these techniques are superfluous at this point since we will move on the CFA and SEM later on, which are better suited for those types of questions anyways. But note that you could and should play around with the data here and fit different model solutions and compare them. One reason I like this dataset is because of how massive it is, try to remove some items and see what happens :) EFA is fun in the sense that it is very open, you don´t have any clear answers to your questions and you are just asking questions from your data. I think it´s a good approach to pilot studies or studies that are not heavy on hypothesis testing.   
+
+
+

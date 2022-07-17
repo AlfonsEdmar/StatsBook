@@ -1,5 +1,54 @@
 # Welcome to R
 ## The R environment
 ## Basic programming
+
+R is more or less a very sophisticated calculator. You can use the source as a simple calculator. For example, executing the code 1+1 returns 2 in the consol. Try It out yourself or copy the code below. 
+
+```{r}
+1+1
+```
+You can also save objects to the global environment and give them certain values. For example, if a and b are equal to 1, a + b will also equal 2. The only thing you need to do is define the characters as numbers like so:
+```{r}
+a = 1
+b = 1
+
+a+b
+```
+You can also ask “questions” from r. However, r can only answer in a binary fashion, that is, TRUE(T) or FALSE(F). To ask r if a = b we use double equal marks. The == notation is a logical phrasing while the = is an assignment of value. 
+```{r}
+1 == 1
+
+1+1 == 3
+
+a==b
+
+a+b == 3
+```
+I find this quite annoying, therefore I rarely use the single equal mark for anything outside what is required by functions. Instead, I use <-. In many settings the <- is synonymous with =,  but whenever I assign a function or a value to something in the global environment I use <- instead of = since I find the arrow more readable and less confusing.  
+
+```{r}
+#We assign with arrows
+a <- 2
+b <- 2
+
+a + b
+
+#And do logic with equal
+a == b
+
+#Arrows don´t to logic - see the error
+a <-<- b
+```
+This is not even close to scratching the surface of what r programming is, but this is not a text about programming. I encourage you to looking into some of the resources on R I provide if you are interested in more then the absolute bare-bones. 
+
 ## Organisation
-## Rmarkdowm 
+
+Something that will make you time with r infinitely more enjoyable is keeping your house in order and organising your files so that they are easily accessible in your computer. You NEED to have a folder dedicated to r. This folder should in turn be divided up in folders containing scripts data files and other potential folders. How you organise is of course very much up to you, but having files that are in the same place is very important, otherwise things will disappear in the bottomless pit that is default hard drive storage.  This is particularly important for when you want to load datafiles fast and consistently and avoid errors in your scripts.  This leads us to projects.
+
+### Projects 
+
+R projects are awesome. They function as a kind of working space whare you can store various files associated with what you are working on. For example, you might want to create an r project for following this text. You simply go up to “files -> new projects -> new directory -> new project” the fill in the name and where you want to store the project – I have a folder within my r folder containing all projects. Opening data files and scripts is very accessible through the “files” pane when working within a project. 
+
+### Rmarkdown
+
+The easiest way to work in r is with normal scripts, the annoying part with normal scripts is that writing notes is a bit cumbersome. They never look good, and you have to put a # mark before writing so that your code doesn’t disturb the other lines of code. One way to take notes and structure an analysis better is with r markdown. There are many things that goes into using markdown, but with a bit practice it becomes natural – I encourage you to look up a tutorial on using markdown :)

@@ -1,0 +1,432 @@
+---
+title: "comparing means primer "
+author: "Alfons Edmar"
+date: '2022-07-17'
+output: html_document
+---
+
+We should all be familiar with means, spreads, distributions by now. Lets use an example from Field to get a good look at how this comes together when we compare means. We will be using the invisibility cloak data since i think that´s funny. The question is, will an invisibility cloak make you more mischevious?
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(faux)
+library(haven)
+invisibility <- read_sav(here("data sets/Invisibility.sav"))
+#checking the data structure
+str(invisibility)
+#renaming to lower caps
+names(invisibility) <- c('cloak', 'mischief')
+#making invisibility a factor
+invisibility$cloak <- as.factor(invisibility$cloak)
+
+#taking some descriptive statistics using pastecs
+by(invisibility$mischief, invisibility$cloak, pastecs::stat.desc)
+
+#let´s plot it also so we can get a better look. 
+
+#First we look at the histograms for mischief for cloak and no cloak
+ggplot(data = filter(invisibility, cloak == 0))+
+  geom_histogram(aes(mischief), fill = 'darkred')+
+  labs(title = 'No cloak')+
+  theme_bw()
+
+ggplot(data = filter(invisibility, cloak == 1))+
+  geom_histogram(aes(mischief), fill = 'steelblue')+
+  labs(title = 'Cloak')+
+  theme_bw()
+
+invisibility%>%
+  ggplot(aes(x = mischief, colour = cloak))+
+  geom_density(size = 2, aes(fill = cloak), alpha = .3)+
+  theme_bw()
+  
+#They are not distributed very differently, we should be able to compare these two groups alright. Let´s plot the median difference with violins and boxes. 
+
+invisibility%>%
+  ggplot(aes(y = mischief, x = cloak, colour = cloak))+
+  geom_violin(aes(fill = cloak), alpha = .4)+
+  geom_boxplot(width = .3, colour = 'grey', size = 1)+
+  theme_bw()
+  
+#poseesing a cloak seems to make someone slightly more mischievious. 
+
+```
+Let´s check if the difference is statistically significant using the t-test
+
+```{r}
+t <- t.test(mischief ~ cloak, data = invisibility)
+t
+effectsize(t)
+```
+
+Seams like we dont have a very robust difference, lets see if we can 
+simulate the distribution of the populations using the rnorm function and the mean and spread of mischief for cloak and no cloak.
+
+
+```{r}
+no_cloak <- rnorm(n = 1e4, mean = 3.75, sd = 1.91)
+#since we are working with ordinal scales we need to truncate our values
+no_cloak <- norm2trunc(no_cloak, min = 0)
+#we also need to round our values. 
+no_cloak <- round(no_cloak, 0)
+
+cloak    <- rnorm(n = 1e4, mean = 5,    sd = 1.65)
+cloak <- norm2trunc(cloak, min = 0)
+cloak <- round(cloak, 0)
+
+#Creating a data set with our simulated values
+data <- data.frame(no_cloak, cloak)
+names(data) = c('no_cloak', 'cloak')
+summary(data)
+
+
+#plotting our simulated values
+ggplot(data)+
+  geom_histogram(aes(cloak), fill = 'red', alpha = .5)+
+  geom_histogram(aes(no_cloak), fill = 'blue', alpha = .5)+
+  xlab('Blue = no cloak.  Red = cloak')
+#looks pretty nice to me.
+```
+
+Let´s run the t-test on the simulated values
+```{r message=FALSE, warning=FALSE}
+sim_t <- t.test(x= no_cloak, y = cloak, data = data)
+sim_t
+effectsize(t)
+```
+Notice how small the p-value is, this is due to our big sample. But the effect 
+size is not significant, that is, we are not certain that an effect actually exists. If we have a large number of observations, the p-value is generally significant. This simulation is therefore quite bad. Let´s make a type of bootstrap simulation instead, but instead of using sampling from the data we make estimations using the rnorm function with the same sample size as our data, that is n = 12(per group)
+
+
+```{r}
+#we can use a for-loop for this. First we create an object for storing our t-values.
+resamp_t <- data.frame(t = NA)
+
+#Then we specify our loop. We will make 1000 t-tests and store the t-value in resamp_t
+set.seed(69)
+for (i in 1:1000){
+  no_cloak <- rnorm(n = 12, mean = 3.75, sd = 1.91)
+  no_cloak <- norm2trunc(no_cloak, min = 0)
+  no_cloak <- round(no_cloak, 0)
+  
+  cloak    <- rnorm(n = 12, mean = 5,    sd = 1.65)
+  cloak <- norm2trunc(cloak, min = 0)
+  cloak <- round(cloak, 0) 
+ 
+  t <- t.test(x= no_cloak, y = cloak, data = data) 
+  resamp_t[i,] <- c(t$statistic)
+  
+}
+#epic, let's plot out our t-values and put some lines at the critical values of t for our specific sample size.
+
+ggplot(resamp_t)+
+  geom_density(aes(t))+
+  geom_vline(xintercept = -2.048, linetype = 'dashed', size = 1)+
+  theme_bw()
+
+#pretty cool right? The dashed line indicates all significant t-tests. We can get somethings thats similar to a power calculation from this by counting the number of significant test and dividing it by the number of tests we have done. What we get is the ratio of significant results. We can then say that "assuming the effect exists, there is an x change to find it given our sample size". 
+power <- sum(resamp_t$t<=-2.048)/length(resamp_t$t)
+
+#Note that this is NOT an a priori power calculation, but given the sample size of the data we can only find the effect around 33% of the time, this is really bad. Even if we assume that such a big effect size that is observed exists, we are in big trubble.
+
+#Let´s copare our results with a normal power analysis 
+pwr::pwr.t.test(n = 12, d = .74, sig.level = .05, type = 'two.sample', alternative = 'two.sided')
+#The results are not the same but the certainly send the same message! 
+```
+
+In conslusion we can say that a cloak wont make you more mischevious, or at least we need some more evidence to come to that conclusion. I quite like using simulation as a means of approximating power. It puts the abstract concept of power on a more tangeble level, that is, at what quantile does our presumed distribution of t-values reject the null hypothesis? even though this is not 'true' power, i think it does a nice job of providing a practical visual.
+
+While we are on the topic of power, we can look at a common practice that can reduce our power quite a bit: median splits. I believ Field calls the devils work? lets find out if they are using simulation. 
+```{r}
+
+#First we create some data with faux, you can use my numbers or choose your own, they are arbitrary. 
+set.seed(234)
+data <- rnorm_multi( n = 400                  #the number of obs
+                     , vars = 2               #the number of variables
+                     , mu = c(44, 23)         #the mean of our variables
+                     , sd = c(8, 3)           #the sd of our variables
+                     , r  = .68               #the correlation of our variables
+                     , varnames = c('x', 'y'))#the name of our vars 
+cor(data)
+# here we have a correlation of .689 sampled from a population correlation of .68
+#lets see what happens when we split the data in to quantile splits. That is, divide them in 4 equal parts.
+
+data <- 
+  data %>% mutate(x_quantilegroup = ntile(x, 4)) %>% 
+  mutate(y_quantilegroup = ntile(y, 4)) %>% 
+  head()
+cor(data$x_quantilegroup, data$y_quantilegroup)
+
+#this is a very big correlation, probably spurious, lets simulate this to find out. We follow the same procedure as with the t-tests, but lets do 5000 simulations instead. Let´s start with continous r.
+
+r1 <- data.frame(r1 = NA)
+set.seed(3452)
+for ( i in 1:5000){
+  data <- rnorm_multi( n = 400
+                       , vars = 2
+                       , mu = c(44, 23)
+                       , sd = c(8, 3)
+                       , r  = .68
+                       , varnames = c('x', 'y'))
+  r <- data.frame(cor(data$x, data$y) )
+  r1[i,] <- c(r)
+}
+
+#Now lets split the sample into quantiles - this will take a bit more time
+r2 <- data.frame(r2 = NA)
+set.seed(435)
+for ( i in 1:5000){
+  data <- rnorm_multi( n = 400
+                       , vars = 2
+                       , mu = c(44, 23)
+                       , sd = c(8, 3)
+                       , r  = .68
+                       , varnames = c('x', 'y'))
+
+  data <- data %>% mutate(x_quantilegroup = ntile(x, 4)) %>% 
+  mutate(y_quantilegroup = ntile(y, 4))
+r <- cor(data$x_quantilegroup,data$y_quantilegroup)
+r2[i,] <- c(r)
+}
+
+r <- data.frame(r1,r2)
+summary(r)
+
+#Lets visualise this. 
+ggplot(r)+
+  geom_density(aes(r1), fill = 'blue', alpha = .5)+
+  geom_density(aes(r2), fill = 'red',  alpha = .5)+
+  geom_vline(aes(xintercept = .68), size = 2, linetype = 'dashed')+
+  xlab('Red = corelation from quantlies.  Blue = continus correlation.  
+       Dashed line = true effect size')+
+  theme_bw()
+#.
+
+```
+
+They truly are the devil. We get the wrong effect size. This is something to think about. We should probably not reduce our sample with median/quantile splits if at all possible. A  nice thing with simulations is that we have all the information. That is, we know the true effect size since we decide it ourselves. 
+
+Another thing that Field harps on about is that the effect size of eta is less preferable than omega. I agree, but it´s not super easy to understand why. We can use simulations again to see how eta and omega behaves in different settings. 
+
+
+Let´s do a play example and say we are testing school classes(on something), we dont expect a difference between all of them, but we do expect differences between some classes. Here is an example of a comparison between three classes 
+```{r}
+k    <- 3  #number of classes
+n1   <- 23 #student in class one
+n2   <- 22 #students in class two
+n3   <- 25 #students in class three
+N    <- n1 + n2 + n3
+df_b <- k - 1
+df_e <- N - k
+
+
+sst <- 4000     #total sum of squares
+ssb <- 500      #sum of squares between
+sse <- sst-ssb  #sum of squares error
+mse <- sse/df_e #mean squared error
+ssb/sst #eta
+(ssb-(df_b*mse))/(sst+mse) #omega
+```
+Pretty simple right? Let´s change the setting  and make a data frame comparison of 14 classes where the sst and ssb increases by 5% for every new class included in the comparison. That is, the explained variance and the total variance increases the same amount - i.e., equally
+```{r}
+k <- c(1:15)
+N <- cumsum(rep(25, 15))
+df_b <- k - 1
+df_e <- N - k
+
+sst <- cumprod(c(4000,rep(1.05, 14)))
+ssb <- cumprod(c(500,rep(1.05, 14)))
+sse <- sst-ssb
+mse <- sse/df_e
+eta <- ssb/sst
+omega <- (ssb-(df_b*mse))/(sst+mse)
+effect_diff <- eta-omega
+
+class_data_equal <- data.frame(k, N, df_b, df_e, sst, ssb, sse, mse, eta, omega, effect_diff)
+class_data_equal <- slice(class_data_equal, -1) #removing the first row
+View(class_data_equal)
+````
+Lets plot this so we can see more clearly 
+```{r}
+#plotting both effect sizes
+ggplot(class_data_equal)+
+  geom_line(aes(y = omega, x = k), size = 1, colour = 'red')+
+  geom_line((aes(y = eta , x = k)),size = 1, colour = 'blue')+
+  scale_x_continuous(breaks = 1:14)+
+  ylab('Effect size')+
+  ggtitle('Omega = Red.  Eta = Blue')+
+  theme_bw()
+#plotting the difference between the effect sizes
+ggplot(class_data_equal)+
+  geom_smooth(aes(y = effect_diff, x = k))+
+  scale_x_continuous(breaks = 1:14)+
+  ylab('Effect size difference')+
+  theme_bw()
+```
+Pretty cool right? lets make it even worse and look at an example where the explained variance increases less than the increase in total variance. Lets say that with each additional class, sst increases with 5% and ssb with 2%
+```{r}
+sst <- cumprod(c(4000,rep(1.05, 14)))
+ssb <- cumprod(c(500,rep(1.02, 14)))
+sse <- sst-ssb
+mse <- sse/df_e
+eta <- ssb/sst
+omega <- (ssb-(df_b*mse))/(sst+mse)
+effect_diff <- eta-omega
+
+class_data_unequal <- data.frame(k, N, df_b, df_e, sst, ssb, sse, mse, eta, omega, effect_diff)
+class_data_unequal <- slice(class_data_unequal, -1) #removing the first row
+View(class_data_unequal)
+```
+lets plot this too
+```{r}
+ggplot(class_data_unequal)+
+  geom_line(aes(y = omega, x = k), size = 1, colour = 'red')+
+  geom_line((aes(y = eta , x = k)),size = 1, colour = 'blue')+
+  scale_x_continuous(breaks = 1:14)+
+  ylab('Effect size')+
+  ggtitle('Omega = Red.  Eta = Blue')+
+  theme_bw()
+
+ggplot(class_data_unequal)+
+  geom_smooth(aes(y = effect_diff, x = k))+
+  scale_x_continuous(breaks = 1:14)+
+  ylab('Effect size')+
+  theme_bw()
+```
+Observe the slight difference in slope, lets look closer at this difference 
+```{r}
+equal_unequal_diff <- class_data_unequal$effect_diff - class_data_equal$effect_diff
+
+x.seq <- seq(1:14)
+diffplot <- data.frame(equal_unequal_diff, x.seq)
+
+ggplot(diffplot)+
+  geom_point(aes(y = equal_unequal_diff, x=x.seq)
+              , size = 4, alpha = .5, colour = 'red')+
+  scale_x_continuous(breaks = 1:14)+
+  ylab('Effect size difference')+
+  xlab('df between')+
+  theme_bw()
+```
+we see here that the difference between equal and unequal ssb/sst ratio increases as the number of comparisons increase. 
+
+
+Another way of thinking about this could be through repeated measures. If we exchange class for time in the example above we would make the same conclusion. That is because Omega is dependent on the sample size since it uses MSE for its estimation. 
+
+We can simulate a correlation between two variables in various sample sizes to examine this closer. 
+
+here we have 30 observations per group with a correlation of .6
+```{r message=FALSE, warning=FALSE}
+data <- rnorm_multi( n = 30
+                    , vars = 2
+                    , mu   = c(33, 35)
+                    , sd   = c(2 , 5 )
+                    , r    = .6
+                    , varnames = c('x', 'y')
+                    , empirical = TRUE)
+cor(data)
+lm1 <- aov(y ~ x, data = data)
+summary.aov(lm1)
+summary.lm(lm1)
+effectsize(lm1, type = 'eta')
+effectsize(lm1, type = 'omega')
+```
+If we drastically increase the sample size omega and eta will be equal
+```{r message=FALSE, warning=FALSE}
+data2 <- rnorm_multi(n = 1e5
+                    , vars = 2
+                    , mu   = c(33, 35)
+                    , sd   = c(2 , 5 )
+                    , r    = .6
+                    , varnames = c('x', 'y')
+                    , empirical = TRUE)
+cor(data2)
+lm2 <- aov(y ~ x, data = data2)
+summary.aov(lm2)
+summary.lm(lm2)
+effectsize(lm2, type = 'eta')
+effectsize(lm2, type = 'omega')
+```
+And if we reduce it to nothing they will differ greatly 
+
+```{r message=FALSE, warning=FALSE}
+data3 <- rnorm_multi(n = 5
+                     , vars = 2
+                     , mu   = c(33, 35)
+                     , sd   = c(2 , 5 )
+                     , r    = .6
+                     , varnames = c('x', 'y')
+                     , empirical = TRUE)
+cor(data3)
+lm3 <- aov(y ~ x, data = data3)
+summary.aov(lm3)
+summary.lm(lm3)
+effectsize(lm3, type = 'eta')
+effectsize(lm3, type = 'omega')
+```
+There we have it. Since omega uses the mean sum of squares it varies across sample sizes. Eta does not do this, therfore it only varies depending on the ratio of ssb and sst. This is why the eta is the same across data1 data2 and data3, while omega is very different
+
+Lets make a plot of eta and omega values on sample sizes from 5 to 200 per group. This might be labour intensive for your computer - but it should go fast :) 
+
+```{r message=FALSE, warning=FALSE}
+#let´s clean up our environment first - we have alot of stuff there now
+rm(list = ls())
+
+omega <- data.frame('parameter' = NA, 'omega2' = NA
+                , 'ci' = NA, 'ci_lo' = NA, 'ci_hi' = NA)
+for( i in 1:200){
+  data <- data.frame(rnorm_multi(n = i+5
+                                 , vars = 2
+                                 , mu   = c(0, 1)
+                                 , sd   = c(1 ,1 )
+                                 , r    = .6
+                                 , empirical = TRUE
+                                 , varnames = c('x', 'y')))
+  x <- data$x
+  y <- data$y
+  lm1 <- aov(x~y)
+  o <- effectsize(lm1, type = 'omega')
+  
+  omega[i,] <- o
+  
+}
+  
+
+eta <- data.frame('parameter' = NA, 'eta' = NA
+                    , 'ci' = NA, 'ci_lo' = NA, 'ci_hi' = NA)
+for( i in 1:200){
+  data <- data.frame(rnorm_multi(n = i+4
+                                 , vars = 2
+                                 , mu   = c(0, 1)
+                                 , sd   = c(1 ,1 )
+                                 , r    = .6
+                                 , empirical = TRUE
+                                 , varnames = c('x', 'y')))
+  x <- data$x
+  y <- data$y
+  lm1 <- aov(x~y)
+  e <- effectsize(lm1, type = 'eta')
+  
+  eta[i,] <- e
+  
+}
+
+omega_eta <- data.frame(omega$omega2, eta$eta, (5:204))
+names(omega_eta) <- c('omega', 'eta', 'sample_size')
+
+ggplot(omega_eta)+
+  geom_smooth(aes(x = sample_size, y = omega), colour = 'red')+
+  geom_smooth(aes(x = sample_size, y = eta))+
+  scale_x_continuous(breaks = c(5, 20, 30, 50, 75, 100, 150, 200))+
+  ylab('Effect size')+
+  xlab('n per group')+
+  ggtitle('Omega = Red. Eta = Blue')+
+  theme_bw()
+```
+This shows the relationship between eta and omega quite nicely i think. It also shows how Eta can be quite a problematic effect size if the sample is small. 
+
+A disclaimer to this section is that I am not a very "mathy" guy and I might be doing some mistakes in these simulations. I would have liked to cross reference it somewhere but I have not seen anyone doing anyhting similar. 
+
+
+

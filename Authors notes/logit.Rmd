@@ -1,0 +1,153 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+packages we need to do some logits
+```{r packages, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+library(haven)
+library(here)
+library(car)
+```
+
+Let´s load the data. We use the data from field again - that is, the eel data.
+
+```{r}
+data <- read_sav(here("data sets/Eel.sav"))
+names(data) <- c('cured', 'intervention', 'duration')
+
+```
+Let´s have a look at our variables
+```{r}
+str(data)
+
+data %>%
+  ggplot(aes(x = duration))+
+  geom_histogram()+
+  theme_bw()
+```
+Looks very nice, first we will do a univariate logistic regression and then add a the dumy variable of intervention. We formulate our model the same way as in the normal regression but use the glm function instead of the lm function. Since we are using a glm, we also need to specify what link function we will use, we will use logit since, well...this is a chapter on logit.   
+```{r}
+m1 <- glm( formula = cured ~ duration 
+          , data   = data
+          , family = binomial(link = 'logit'))
+
+summary.glm(m1)
+```
+Interesting, the duration does not seem to increase the probability of being cured. Let´s check if the intervention alone increases the probability of being cured. 
+```{r}
+m2 <- glm( formula = cured ~ intervention 
+          , data   = data
+          , family = binomial(link = 'logit'))
+
+summary.glm(m2)
+```
+It certenly does, let´s fit a multivariate logistic regression using both variables.
+```{r}
+m3 <- glm( formula = cured ~ duration + intervention
+          , data   = data
+          , family = binomial(link = 'logit'))
+
+summary.glm(m3)
+```
+No, duration does not matter even when we adjust for the intervention. We might have an interaction though, so let´s fit a model with interactions
+
+```{r}
+m4 <- glm( formula = cured ~ duration*intervention 
+          , data   = data
+          , family = binomial(link = 'logit'))
+
+summary.glm(m4)
+```
+Huh, if we include an interaction term no variables are significant predictors. Let´s stick with the model without the interaction and check for any influential observations 
+```{r}
+
+summary(influence.measures(m3))
+mean(hatvalues(m3))*3
+#observation 47 and 111 are highly impactfull. Lets have a look at the residuals
+
+summary(scale(m3$residuals))
+res <- scale(m3$residuals)
+head(arrange(tibble(res), desc(res)), 10)
+#They are quite small = good. 
+```
+I don´t think we need to exlude any variables, so let´s check our assumptions and then make you model interpretable. 
+
+```{r}
+#Checking independence
+durbinWatsonTest(m3)
+```
+This is not very good. Thd statistic is approaching significance, it is close to two however. Lets check the VIF and tolerance. 
+
+```{r}
+vif(m3)
+1/vif(m3)
+```
+Very solid, no issues here. Lets finally go through the linearity assumption. We can use the box-tidwell test for this. Or just check visually. Lets start with the latter.
+```{r}
+logit <- logit(fitted.values(m3))
+df <- data.frame(data$cured, data$duration, data$intervention) %>%
+  mutate(logit = logit(fitted.values(m3))) %>%
+  gather(key = "predictors", value = "predictor.value", -logit)
+
+ggplot(df, aes(logit, predictor.value))+
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_smooth(method = "loess") + 
+  theme_bw() + 
+  facet_wrap(~predictors, scales = "free_y")
+```
+No good, duration is not linear to the logit, we should drop it. We won´t be doing much harm to our model anyways. Thus, let´s continue with model 2(m2). Now we want to interpret the model, I like to use absolute probabilites. This is not appropriate in this scenario since we dont have a continous variable.
+```{r}
+prob <- predict.glm(m3, type = 'response')
+data <- cbind(data, prob)
+
+ggplot(data = data, aes(x=duration, y = prob))+ 
+  stat_smooth(method="glm"
+              , se=T
+              , method.args = list(gaussian(link = 'logit'))
+              , colour = 'pink'
+              , size = 2)+
+  geom_jitter(alpha=.5, height = 0) +
+  ylim(c(0,1))+
+  theme_bw()
+#.
+```
+Coolio, here we see the absolute probability of being cured as the duration after the treatment increases given that we adjust for the treatment effect. Note that the effect is not significant, the shaded 95% confidence intervall is overlapping across values of duration. If we do the same plot on intervention we get a graph with two values on the x-axis like so:
+```{r}
+ggplot(data = data, aes(x=intervention, y = prob))+ 
+  stat_smooth(method="glm"
+              , se=T
+              , method.args = list(gaussian(link = 'logit'))
+              , colour = 'pink'
+              , size = 2)+
+  geom_jitter(alpha=.5, height = 0) +
+  ylim(c(0,1))+
+  theme_bw()
+#Note. The dots/jitters on the graphs are just the observations. I keep them there because they emphasize that the outcome is binary. 
+
+```
+We can also get the odds ratios taking the exponent of the logit like so:
+```{r}
+exp(coef(glm(formula = cured ~ duration + intervention, family = binomial(link = "logit"), data = data)))
+#or simply accessing the coefficients from the fitted model, i prefere this latter way :) 
+exp(m3$coefficients)
+```
+Here we see that the liklihood of being cured is three times as likly for those partaking in the treatment. The duration does not matter. 
+
+We can also make a classification table - how many times our model makes correct classifications on the dependet variabel.
+```{r}
+classification <- data.frame(
+  respons = data$cured                       #what is the actual outcome?
+, predicted = round(fitted.values(m3),0))    #what is our guess?
+
+xtabs(~ predicted + respons, data = classification)
+#how many predictions were correct?
+correct_prediction.1 <- 32+41
+#What percentage is correct?
+correct_prediction.1/length(data$cured)
+```
+This is not a very good model. This model only makes correct classification 65% of the time. This is not much better than chance. This marks the end for logistic regression for now. Hopefully there is a good example of logistic regression in the wild in the chapter on real data(which don´t exist as of now). This example is quite boring in the sense that not much model building is available - we dont have a lot of variables. 
+
+
+

@@ -1,7 +1,17 @@
 # What I expect you to know 
 
+This book could (and probably should) be confused with my own notetaking in certain if not all chapters. That means that I will probably omit many things that are obvious to me or things I deem to much of a sidebar to explain. That is, things that will make the reading a drag – this should be a quick read! Therefore, it might be good to mention a few things that will be good to know before you read this (although they are not necessary).
+
 ## Descriptive statistics 
+
+Descriptive statistics such as measures of centrality (mean, mode, median) and spread (variance, deviance etc) will not be explained in this text.  This extends to other statistical values such as residuals and various errors. An understanding of the basics is required since interpretations of more “complicated” statistics such as root mean squared error of approximation (RMSEA) is not something I can or will spend much time at. Again, this is not a text about statistics, it’s a text about doing statistics. Therefore, and understanding of the basics is good to have since I won´t cover it. 
 
 ## Basic null hypothesis testing 
 
+Null hypothesis testing (NHT) is, for better or worse, the most common way of doing statistics currently. At a graduate level the theory behind NHT should be something you are familiar with. While we will do some test interpretation, the logic underlying hypothesis testing will not be covered directly. It might be mentioned in some chapters where we play around with distributions and simulation. Other than that, NHT will be shown rather then explained.  
+
 ## Statistical phenomena 
+
+Basic knowledge of statistical phenomena such as regression to the mean, law of large numbers, independence of events, correlation != causation and central limit theorem is very good to have. It will make the logic behind some procedures clearer. It is also useful in the sense that it will make it easier to diagnose errors and weird results. Since some of the techniques we will cover are a bit advanced, having a basic understanding of some of the underlying principles of statistics and how data behaves is good. 
+
+If everything I have said up until this point sounds like gibberish, do not fret. While it´s good to know the basics, you will be able to read the code and use it yourself without issue, but it is important to remember that most things that are good to know about statistics won’t be covered here! 
