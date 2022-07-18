@@ -10,7 +10,7 @@ library(haven)
 library(here)
 
 ```
-Regression is not always easily visualised. This here is a function that will visualise a univariate slope along with some of the most important measurements. This is a slight adaption from a function I found here: find the article
+Regression is not always easily visualised. This here is a function that will visualise a univariate slope along with some of the most important measurements. This is a slight adaption from a function I found here: https://sejohnston.com/2012/08/09/a-quick-and-easy-function-to-plot-lm-results-in-r/
 ```{r}
 regplot <- function (fit, name) {
   
@@ -27,7 +27,8 @@ regplot <- function (fit, name) {
 ```
 Field uses data from album sales. When loading data in r the best way is to put your data files in an easy to access place - note that this is my path, the data file is album sales from chapter 8 or 9 depending on edition so load that.  
 ```{r message=FALSE, warning=FALSE}
-data <- read_sav(here("Album Sales.sav"))
+data <- read_sav("Album Sales.sav")
+
 #Let´s change the names to low caps so we can type easily. 
 names(data) <- c('adverts', 'sales', 'airplay', 'image')
 #Taking a peek at the data
@@ -444,6 +445,7 @@ Let´s check if the difference is statistically significant using the t-test
 ```{r}
 t <- t.test(mischief ~ cloak, data = invisibility)
 t
+library(effectsize)
 effectsize(t)
 ```
 
@@ -598,6 +600,9 @@ Another thing that Field harps on about is that the effect size of eta is less p
 
 Let´s do a play example and say we are testing school classes (on something), we don’t expect a difference between all of them, but we do expect differences between some classes. Here is an example of a comparison between three classes. Note that this part will be a bit code heavy, use the "?" function for the commands you want to take a closer look at :) 
 ```{r}
+#Let´s clean the environment before we start
+rm(list = ls())
+
 k    <- 3  #number of classes
 n1   <- 23 #student in class one
 n2   <- 22 #students in class two
@@ -616,6 +621,9 @@ ssb/sst #eta
 ```
 Pretty simple right? Let´s change the setting and make a data frame comparison of 14 classes where the sst and ssb increases by 5% for every new class included in the comparison. That is, the explained variance and the total variance increases the same amount - i.e., equally
 ```{r}
+#Again, I like a clean environment, so i start with a clean slate
+rm(list = ls())
+
 k <- c(1:15)
 N <- cumsum(rep(25, 15))
 df_b <- k - 1
@@ -632,7 +640,7 @@ effect_diff <- eta-omega
 class_data_equal <- data.frame(k, N, df_b, df_e, sst, ssb, sse, mse, eta, omega, effect_diff)
 class_data_equal <- slice(class_data_equal, -1) #removing the first row
 View(class_data_equal)
-````
+```
 
 Let’s plot this so we can see more clearly 
 
@@ -654,6 +662,7 @@ ggplot(class_data_equal)+
 ```
 Pretty cool right? let’s make it even worse and look at an example where the explained variance increases less than the increase in total variance. Let’s say that with each additional class, sst increases with 5% and ssb with 2%
 ```{r}
+
 sst <- cumprod(c(4000,rep(1.05, 14)))
 ssb <- cumprod(c(500,rep(1.02, 14)))
 sse <- sst-ssb
@@ -929,6 +938,7 @@ summary.lm(lm(Attractiveness ~ fac.face * fac.alc, data = goggles))
 The Tukey function is a very neat function for ANOVA. There is significant difference between placebo conditions and high alcohol doses, as well as on various levels of interactions between the factors. We can explain quite a bit of variation as well which is nice. 
 
 This is all the ANOVA I have in me to give. If it is not evident by now, I do not like ANOVA (on its own) very much. There are many more things you can do with the ANOVA analysis along with contrasts, robust measures, and interaction plots. I advise you to look for these things elsewhere since I don´t find them very fun - especially since we can use other tools that are more fun, like multiple regression.  
+
 
 
 

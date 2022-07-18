@@ -125,7 +125,7 @@ Now that we have gotten familiar with path analysis, we can try out another exam
 
 ```{r}
 library(haven)
-data <- read_sav("data path analysis spring 22.sav")
+data <- read_sav("data sets/data path analysis spring 22.sav")
 #Note. this is my path to the data and to access the file you need to import it yourself
 ```
 These are the main packages we will be using. We have the usual suspects + MVN for analysis of multivariate normality. 
@@ -350,8 +350,7 @@ boot_sample <- bootstrapLavaan( object = fit.2 #the fit we want to sample
 Notice that “boot_sample” is a matrix of many estimates. Let´s put the regression coefficients in a dataframe and make our intervals.
 ```{r}
 boot_sample <- data.frame(boot_sample)
-boot_coef   <- select(boot_sample  #the data we want to take variables/cols from
-                      , c(1,2,3,)) #a list of the cols we want to take(1,2,3)
+boot_coef   <- boot_sample[c(1,2,3)]
 
 quantile(boot_coef$stress.support     #the estimate we want to take intervals on
          , probs = c(.025, .5, .975)) #the percentile points we want to see
@@ -383,7 +382,7 @@ library(semPlot)
 
 ```{r}
 #Loading the data
-data <- read_sav("Lambert et al. (2012).sav")
+data <- read_sav("data sets/Lambert et al. (2012).sav")
 names(data) <- c('consumption', 'ln_porn', 'commit', 'infi', 'hook_ups')
 ```
 

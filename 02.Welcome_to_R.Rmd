@@ -1,5 +1,11 @@
 # Welcome to R
+
+If you have not downloaded R yet, now is the time to do so. Simply googling “r download” should get you there, if not, go to: r-project.org or find one of the many tutorials of how to download r and the interface rstudio. Rstudio is very nice and can be customized to suite your preferred layout. 
+
 ## The R environment
+
+Rstudio has 4 primary panes where you can work from. These are the global environment, plots/files, source, and console. The source and the console are the panes/windows where you can write and execute code. I recommend using the source pane for all your programming. That way you can edit you code easily and execute it whenever you want – and most importantly, save it for later so you work never disappears. 
+
 ## Basic programming
 
 R is more or less a very sophisticated calculator. You can use the source as a simple calculator. For example, executing the code 1+1 returns 2 in the consol. Try It out yourself or copy the code below. 
@@ -36,8 +42,7 @@ a + b
 #And do logic with equal
 a == b
 
-#Arrows don´t to logic - see the error
-a <-<- b
+#Arrows don´t to logic - try writing a <- <- b
 ```
 This is not even close to scratching the surface of what r programming is, but this is not a text about programming. I encourage you to looking into some of the resources on R I provide if you are interested in more then the absolute bare-bones. 
 
